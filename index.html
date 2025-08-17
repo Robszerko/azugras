@@ -23,7 +23,7 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prevents scrollbars on the body for desktop VIEW */
+            overflow: hidden; /* Prevents scrollbars on the body for DESKTOP VIEW */
         }
 
         body {
@@ -77,12 +77,10 @@
             overflow-y: auto; 
         }
 
-        /* Custom Scrollbar for overlays */
         .overlay-content-wrapper::-webkit-scrollbar { width: 8px; }
         .overlay-content-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
         .overlay-content-wrapper::-webkit-scrollbar-thumb { background-color: var(--primary-color); border-radius: 10px; }
 
-        /* Overlay screens (Start, End) */
         .overlay-screen {
             position: fixed; top: 0; left: 0; z-index: 100;
             background: rgba(15, 12, 41, 0.8);
@@ -106,7 +104,6 @@
         .shop-icon { pointer-events: none; flex-shrink: 0; }
         .shop-item p, #bonus-status { font-size: 0.9em; color: rgba(255, 255, 255, 0.7); margin-top: 5px; margin-bottom: 5px; flex-basis: 100%; min-height: 1em; }
         
-        /* === JÁTÉKSZABÁLYZAT STÍLUSOK (IMPROVED) === */
         #rules-content {
             display: none;
             text-align: left;
@@ -315,27 +312,42 @@
             #feedback-container { min-height: 180px; }
         }
 
-        /* RESPONSIVE STYLES (for mobile) */
+        /* ==== TOTAL MOBILE REFACTOR ==== */
         @media (max-width: 900px) {
-            /* === MOBILE SCROLL FIX === */
             html, body {
                 height: auto; 
                 overflow: auto;
             }
             .game-view {
-                height: auto;
-                padding: 10px;
+                padding: 0;
             }
-            #game-container, .overlay-content-wrapper { 
+            .overlay-screen, #game-screen {
+                 height: auto;
+                 min-height: 100vh;
+                 position: relative;
+            }
+            #start-screen .overlay-content-wrapper {
+                 height: 100%;
+            }
+            .overlay-content-wrapper { 
                 width: 100%;
                 height: auto;
                 max-height: none;
-                padding: 15px; 
-                min-height: 0; 
+                padding: 15px;
+                box-sizing: border-box;
+                overflow-y: auto;
                 justify-content: flex-start;
+            }
+            #game-container {
+                width: 100%;
+                height: auto;
+                min-height: 100vh;
+                display: block; /* Change from flex to simple block */
+                padding: 15px;
+                box-sizing: border-box;
                 overflow: visible;
             }
-            #game-header { flex-wrap: wrap; justify-content: center; gap: 15px; }
+            #game-header { flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 20px; }
             #header-left { order: 1; flex-basis: 50%; }
             #lifelines-container { order: 2; flex-basis: 40%; justify-content: flex-end; }
             #progress-container { order: 3; width: 100%; height: 15px; }
@@ -343,11 +355,23 @@
             #game-logo { width: 140px; }
             .overlay-content h1 { font-size: 2.2em; } 
             .overlay-content p { font-size: 1.1em; }
-            #question-text { font-size: 1.2em; }
-            #bridge-scene { perspective: none; height: auto; flex-grow: 0; }
+            
+            #question-text {
+                font-size: 1.4em;
+                min-height: 3em; /* Ensure space for text */
+                margin-bottom: 30px; /* CRITICAL: Adds space between question and answers */
+                padding: 10px 0;
+            }
+            #bridge-scene {
+                perspective: none;
+                height: auto;
+                margin: 0; /* Let its children create space */
+            }
+
             .future-bridge { display: none; }
-            .options-container { transform: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
-            .bridge-option { width: 90%; max-width: 400px; height: auto; min-height: 70px; font-size: 1em; }
+            .options-container { transform: none; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
+            .bridge-option { width: 95%; max-width: 450px; height: auto; min-height: 70px; font-size: 1.1em; }
+            #feedback-container { min-height: auto; padding-top: 50px; } /* CRITICAL: Adds space before feedback appears */
             #explanation-container { font-size: 1em; }
             .shop-item-row { flex-wrap: wrap; }
             .lifeline-wrapper:hover::before, .lifeline-wrapper:hover::after { display: none; }
@@ -556,7 +580,7 @@
     <script>
         // GAME DATA
         const allQuestions = [
-            { question: "Mi Kanada fővárosa?", options: ["Toronto", "Vancouver", "Ottawa", "Montréal"], answer: "Ottawa", explanation: "Bár nem a legnagyobb, Ottawa Kanada politikai és adminisztratív központja." },
+         { question: "Mi Kanada fővárosa?", options: ["Toronto", "Vancouver", "Ottawa", "Montréal"], answer: "Ottawa", explanation: "Bár nem a legnagyobb, Ottawa Kanada politikai és adminisztratív központja." },
             { question: "Melyik erő tartja a bolygókat a Nap körüli pályájukon?", options: ["Mágnesesség", "Súrlódás", "Nukleáris erő", "Gravitáció"], answer: "Gravitáció", explanation: "A Nap hatalmas tömegvonzása, a gravitáció tartja a bolygókat keringési pályájukon." },
             { question: "Melyik híres magyar étel fő összetevője a paprika és a paradicsom?", options: ["Töltött káposzta", "Gulyásleves", "Lecsó", "Túrós csusza"], answer: "Lecsó", explanation: "A lecsó egy tradicionális magyar egytálétel, amelynek alapja a hagyma, paprika és paradicsom." },
             { question: "Mit jelent a 'CPU' rövidítés a számítástechnikában?", options: ["Központi Tápellátó Egység", "Központi Feldolgozó Egység", "Számítógép Személyi Egység", "Alapvető Programozási Egység"], answer: "Központi Feldolgozó Egység", explanation: "A CPU (Central Processing Unit) a számítógép 'agya', amely a legtöbb számítási feladatot elvégzi." },
@@ -1260,7 +1284,7 @@
     { question: "Melyik a legdrágább film, amit valaha készítettek?", options: ["Avatar", "Avatar: A víz útja", "A Karib-tenger kalózai: Ismeretlen vizeken", "Bosszúállók: Végjáték"], answer: "Avatar: A víz útja", explanation: "Az 'Avatar: A víz útja' becsült költségvetése meghaladta a 460 millió dollárt, ezzel minden idők legdrágább filmjévé vált." },
     { question: "Melyik a leghosszabb ideig tartó háború a történelemben?", options: ["Százéves háború", "Harmincéves háború", "Reconquista", "Pun háborúk"], answer: "Reconquista", explanation: "A Reconquista, azaz az Ibériai-félsziget visszahódítása a móroktól, 711-től 1492-ig tartott, azaz 781 éven át." },
         ];
-       // Game state and constants
+                   // Game state and constants
         const TOTAL_GAME_QUESTIONS = 10;
         const BASE_WIN_CREDITS = 1000;
         const RISKY_WAGER = 500;
@@ -1519,6 +1543,9 @@
         }
 
         function showQuestion() {
+             if (window.innerWidth <= 900) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
             gameContainer.classList.remove('success-pulse', 'fail-shake');
             bridgeScene.classList.remove('advance');
             
@@ -1617,6 +1644,11 @@
                     explanationContainer.textContent = currentQuestion.explanation;
                     explanationContainer.style.display = 'block';
                     explanationContainer.style.opacity = 1;
+
+                    if (window.innerWidth <= 900) {
+                        const resultEl = document.getElementById('result');
+                        resultEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
 
                     if (isCorrect || currentRoundState.usedSafetyNetThisTurn) {
                         if (currentQuestionIndex < gameQuestions.length - 1) {
