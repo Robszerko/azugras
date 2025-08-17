@@ -19,19 +19,22 @@
             --background-end: #24243e;
         }
 
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevents scrollbars on the body for desktop */
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, var(--background-start), var(--background-mid), var(--background-end));
             color: #fff;
             text-align: center;
-            padding: 10px;
-            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
-            margin: 0;
-            overflow: hidden;
         }
 
         #background-scenery { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; object-fit: cover; }
@@ -42,32 +45,49 @@
             height: 100%;
             align-items: center;
             justify-content: center;
+            padding: 15px;
+            box-sizing: border-box;
         }
         #game-screen.active, #start-screen.active, #end-screen.active {
             display: flex;
         }
-
+        
         #game-container, .overlay-content-wrapper {
-            width: 100%; max-width: 1200px; margin: auto; background: rgba(0, 0, 0, 0.4);
-            padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
-            border: 1px solid rgba(0, 229, 255, 0.3); backdrop-filter: blur(10px);
-            position: relative; z-index: 1; display: flex; flex-direction: column;
-            transition: box-shadow 0.5s ease, max-width 0.5s ease, min-height 0.5s ease;
+            width: 90vw;
+            max-width: 1600px;
+            height: 100%;
+            max-height: 95vh;
+            margin: auto; 
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px; 
+            border-radius: 20px; 
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            border: 1px solid rgba(0, 229, 255, 0.3); 
+            backdrop-filter: blur(10px);
+            position: relative; 
+            z-index: 1; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: space-around;
+            box-sizing: border-box;
+            overflow: hidden;
         }
-        #game-container.success-pulse { animation: success-pulse 1.5s ease-out; }
-        #game-container.fail-shake { animation: fail-shake 0.6s ease-in-out; }
+
+        .overlay-content-wrapper {
+            overflow-y: auto; 
+        }
+
+        /* Custom Scrollbar for overlays */
+        .overlay-content-wrapper::-webkit-scrollbar { width: 8px; }
+        .overlay-content-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .overlay-content-wrapper::-webkit-scrollbar-thumb { background-color: var(--primary-color); border-radius: 10px; }
 
         /* Overlay screens (Start, End) */
         .overlay-screen {
             position: fixed; top: 0; left: 0; z-index: 100;
             background: rgba(15, 12, 41, 0.8);
-            padding: 15px;
         }
-         .overlay-content-wrapper {
-            max-height: 100%;
-            overflow-y: auto;
-         }
-        .overlay-content { max-width: 600px; text-align: center; display: flex; flex-direction: column; align-items: center; margin: 0 auto; }
+        .overlay-content { max-width: 700px; text-align: center; display: flex; flex-direction: column; align-items: center; margin: 0 auto; }
         .overlay-content h1 { font-size: 3em; color: var(--primary-color); text-shadow: 0 0 15px var(--primary-color); }
         .overlay-content p { font-size: 1.2em; line-height: 1.5; max-width: 90%; margin-bottom: 20px; }
         .credit-display { font-size: 1.8em; font-weight: bold; margin: 15px 0; color: var(--selected-color); }
@@ -79,14 +99,57 @@
         }
         .overlay-content .btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 0, 193, 0.8); }
         .overlay-content .btn:disabled { background: #555; cursor: not-allowed; box-shadow: none; opacity: 0.6; }
-        .shop-container, .wager-container, .daily-bonus-container { width: 100%; margin: 15px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }
+        .shop-container, .wager-container, .daily-bonus-container, #rules-container { width: 100%; margin: 15px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }
         
         .shop-item { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; }
         .shop-item-row { display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 15px; }
         .shop-icon { pointer-events: none; flex-shrink: 0; }
         .shop-item p, #bonus-status { font-size: 0.9em; color: rgba(255, 255, 255, 0.7); margin-top: 5px; margin-bottom: 5px; flex-basis: 100%; min-height: 1em; }
-
-        /* === NAPI BÓNUSZ STÍLUSOK === */
+        
+        /* === JÁTÉKSZABÁLYZAT STÍLUSOK (IMPROVED) === */
+        #rules-content {
+            display: none;
+            text-align: left;
+            padding: 10px;
+            margin-top: 15px;
+            border-top: 1px solid var(--primary-color);
+        }
+        #rules-content h3, #rules-content h4 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+        #rules-content h4 {
+            margin-top: 20px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+            padding-bottom: 5px;
+        }
+        #rules-content p, #rules-content ul {
+            text-align: justify;
+            margin: 10px auto;
+        }
+        #rules-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        #rules-content li {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            display: flex;
+            align-items: flex-start;
+        }
+        #rules-content li .rules-icon {
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        #rules-content li .lifeline {
+            width: 35px;
+            height: 35px;
+            font-size: 0.9em;
+        }
+        #rules-content strong {
+            color: var(--selected-color);
+        }
+        
         #current-date-display { font-size: 1.1em; color: var(--primary-color); margin-bottom: 10px; text-align: center; }
         #streak-meter { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
         .streak-day { width: 30px; height: 30px; border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; transition: all 0.3s ease; }
@@ -107,11 +170,11 @@
         }
 
         /* Game Header */
-        #game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px; min-height: 50px; gap: 20px; }
+        #game-header { display: flex; justify-content: space-between; align-items: center; padding: 0 10px; gap: 20px; flex-wrap: wrap; flex-shrink: 0; }
         #header-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
         #game-logo { width: 180px; height: auto; }
         #question-counter { font-size: 1.2em; font-weight: 600; color: var(--primary-color); margin-top: 5px; text-align: center; }
-        #progress-container { flex-grow: 1; height: 20px; background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary-color); border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0, 229, 255, 0.5); position: relative; }
+        #progress-container { flex-grow: 1; height: 20px; background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary-color); border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0, 229, 255, 0.5); position: relative; min-width: 200px; }
         #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--secondary-color), var(--primary-color)); border-radius: 20px; transition: width 0.5s ease-out; box-shadow: 0 0 15px var(--primary-color); }
         
         #progress-milestone {
@@ -130,6 +193,18 @@
             transform: scaleY(1.5);
         }
 
+        #header-controls { display: flex; align-items: center; gap: 15px; }
+        
+        #total-credits-display {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--selected-color);
+            border: 1px solid var(--selected-color);
+        }
+        
         #header-next-button {
             background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)); color: #fff; padding: 10px 25px; border: none; border-radius: 50px;
             cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 0 20px rgba(255, 0, 193, 0.5);
@@ -152,8 +227,19 @@
         .lifeline-wrapper:hover::before, .lifeline-wrapper:hover::after { opacity: 1; visibility: visible; }
 
         /* Question & Answers */
-        #question-text { font-size: 1.4em; font-weight: 600; line-height: 1.4; display: flex; align-items: center; justify-content: center; padding: 0 20px; margin: 20px auto 20px auto; min-height: 3em; }
-        #bridge-scene { perspective: 1200px; height: 250px; position: relative; display: flex; align-items: center; justify-content: center; transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); z-index: 10; }
+        #question-text { font-size: 1.4em; font-weight: 600; line-height: 1.4; display: flex; align-items: center; justify-content: center; padding: 0 20px; flex-shrink: 0;}
+        
+        #bridge-scene { 
+            perspective: 1200px; 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); 
+            z-index: 10;
+            flex-grow: 1; 
+            min-height: 200px; 
+        }
         #bridge-scene.advance { transform: translateZ(250px) scale(1.2); }
         .future-bridge { position: absolute; background: rgba(0, 229, 255, 0.2); border: 1px solid rgba(0, 229, 255, 0.5); border-radius: 10px; width: 180px; height: 100px; transition: all 0.5s ease-out; opacity: 0; transform-style: preserve-3d; }
         .future-bridge:nth-of-type(1) { transform: translateZ(-250px) scale(0.8); opacity: 0.5; filter: blur(1px); }
@@ -176,21 +262,34 @@
         .bridge-option.incorrect { animation: none; background: var(--incorrect-color); border-color: #fff; color: #fff; box-shadow: 0 0 30px var(--incorrect-color); opacity: 1 !important; }
         
         /* Feedback */
-        #feedback-container { margin-top: 20px; min-height: 160px; position: relative; z-index: 20; }
+        #feedback-container { min-height: 160px; position: relative; z-index: 20; flex-shrink: 0; }
         #result { font-size: 1.8em; font-weight: bold; height: 40px; }
+        #potential-winnings-display {
+            font-size: 1.3em;
+            color: var(--selected-color);
+            font-weight: 600;
+            margin: 10px 0;
+            height: 25px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
         #explanation-container { background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px; margin: 15px auto 0 auto; max-width: 800px; font-size: 1.1em; line-height: 1.6; display: none; opacity: 0; transition: opacity 0.5s ease; }
-        #end-game-button { 
+        
+        .feedback-buttons { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; }
+
+        #end-game-button, #bank-button { 
             visibility: hidden; 
             opacity: 0; 
             transition: all 0.3s ease; 
-            margin-top: 15px; 
             font-size: 1em; 
             padding: 10px 25px;
         }
-        #end-game-button.visible {
+        #end-game-button.visible, #bank-button.visible {
             visibility: visible;
             opacity: 1;
         }
+        #bank-button { background: linear-gradient(45deg, var(--correct-color), #00c77a); box-shadow: 0 0 20px rgba(0, 255, 155, 0.5); }
+        #bank-button:hover:not(:disabled) { box-shadow: 0 0 30px rgba(0, 255, 155, 0.8); }
 
         /* ANIMATIONS */
         @keyframes revealBridge { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
@@ -207,16 +306,10 @@
         
         /* WIDESCREEN DESKTOP STYLES */
         @media (min-width: 1201px) {
-            #game-container, .overlay-content-wrapper {
-                max-width: 90vw;
-                min-height: 90vh;
-                justify-content: space-around;
-            }
             .overlay-content h1 { font-size: 3.5em; }
             .overlay-content p { font-size: 1.4em; }
             .overlay-content { max-width: 800px; }
-            #question-text { font-size: 1.8em; margin: 1vh 0; }
-            #bridge-scene { height: 300px; }
+            #question-text { font-size: 1.8em; }
             .options-container { gap: 30px; }
             .bridge-option { width: 240px; height: 140px; font-size: 1.2em; }
             #feedback-container { min-height: 180px; }
@@ -224,17 +317,33 @@
 
         /* RESPONSIVE STYLES (for mobile) */
         @media (max-width: 900px) {
-            body { overflow: auto; padding: 10px; }
-            #game-container, .overlay-content-wrapper { padding: 15px; min-height: 0; }
-            #game-header { flex-wrap: wrap; justify-content: space-between; gap: 15px; }
-            #header-left, #lifelines-container { order: 1; }
-            #header-next-button { order: 2; }
+            html, body {
+                height: auto; 
+                overflow: auto;
+            }
+            .game-view {
+                height: auto;
+                padding: 10px;
+            }
+            #game-container, .overlay-content-wrapper { 
+                width: 100%;
+                height: auto;
+                max-height: none;
+                padding: 15px; 
+                min-height: 0; 
+                justify-content: flex-start;
+                overflow: visible;
+            }
+            #game-header { flex-wrap: wrap; justify-content: center; gap: 15px; }
+            #header-left { order: 1; flex-basis: 50%; }
+            #lifelines-container { order: 2; flex-basis: 40%; justify-content: flex-end; }
             #progress-container { order: 3; width: 100%; height: 15px; }
+            #header-controls { order: 4; width: 100%; justify-content: center; margin-top: 10px; }
             #game-logo { width: 140px; }
             .overlay-content h1 { font-size: 2.2em; } 
             .overlay-content p { font-size: 1.1em; }
             #question-text { font-size: 1.2em; }
-            #bridge-scene { perspective: none; height: auto; }
+            #bridge-scene { perspective: none; height: auto; flex-grow: 0; }
             .future-bridge { display: none; }
             .options-container { transform: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
             .bridge-option { width: 90%; max-width: 400px; height: auto; min-height: 70px; font-size: 1em; }
@@ -273,7 +382,55 @@
                     </g>
                 </svg>
                  <p class="copyright-notice">&copy; Copyright by: Robi</p>
-                <p>Játssz és gyűjts Krediteket, hogy segítségeket vásárolhass és nagyobb téteket tehess meg!</p>
+
+                <div id="rules-container">
+                    <button id="toggle-rules-btn" class="btn">Játékszabályzat megnyitása</button>
+                    <div id="rules-content">
+                        <h3>A Játék Célja</h3>
+                        <p>Juss át mind a 10 hídon 10 kvízkérdés helyes megválaszolásával. Gyűjts minél több Kreditet okos döntésekkel, használd a segítségeket, és nyerd meg a főnyereményt!</p>
+
+                        <h3>A Játék Menete</h3>
+                        
+                        <h4>1. Indulás: Játékmód Választása</h4>
+                        <p>A játék elején két út áll előtted:
+                            <br>- <strong>Normál Játék:</strong> Kockázat nélkül indulsz, a főnyeremény 1000 Kredit.
+                            <br>- <strong>Kockázatos Ugrás:</strong> 500 Kredit a tét, de a főnyeremény a duplája, 2000 Kredit!
+                        </p>
+
+                        <h4>2. A Cél: Építsd a Sorozatot!</h4>
+                        <p>Minden helyes válasszal növeled a helyes válasz-sorozatodat és <strong>"kockán forgó"</strong> krediteket gyűjtesz. Minél hosszabb a sorozatod, annál értékesebb a következő helyes válasz! A cél, hogy a lehető legnagyobb összeget gyűjtsd össze, mielőtt bankolsz vagy hibázol.</p>
+
+                        <h4>3. A Döntés: Bankolsz vagy Kockáztatsz?</h4>
+                        <p>
+                            Minden sikeres ugrás után döntened kell:
+                            <br>- <strong>Bank:</strong> A <strong>`Bank`</strong> gombbal bebiztosíthatod a kockán forgó kreditjeidet. Ezek véglegesen a tieid lesznek, de a kreditgyűjtő sorozatod újraindul.
+                            <br>- <strong>Kockázat:</strong> Ha a <strong>`Következő híd`</strong> gombot választod, a kreditek játékban maradnak, és esélyed van tovább növelni a nyereményt, de egy rossz válasz esetén az összes, addig nem bankolt kreditet elveszíted!
+                        </p>
+                        
+                        <h4>4. A Végeredmény: Győzelem vagy Vereség</h4>
+                        <p>
+                            - <strong>Győzelem:</strong> Ha mind a 10 kérdésre helyesen válaszolsz, a főnyereményt ÉS az utolsó körben gyűjtött, nem bankolt krediteket is megkapod.
+                            <br>- <strong>Vereség:</strong> Ha rosszul válaszolsz és nincs Biztonsági Hálód, a játék véget ér. Csak a már sikeresen bankolt és a mérföldkőnél (5. híd) szerzett krediteket tarthatod meg.
+                        </p>
+
+                        <h3>Segítségek</h3>
+                        <ul>
+                            <li>
+                                <div class="rules-icon"><div class="lifeline shop-icon">50/50</div></div>
+                                <div><strong>50/50:</strong> Eltávolít két helytelen választ a négyből, így megduplázva az esélyeidet.</div>
+                            </li>
+                             <li>
+                                <div class="rules-icon"><div class="lifeline shop-icon" style="font-size: 0.8em;">CSERE</div></div>
+                                <div><strong>Kérdéscsere:</strong> Ha egy kérdés túl nehéz, ezzel a segítséggel lecserélheted egy teljesen újra.</div>
+                            </li>
+                              <li>
+                                <div class="rules-icon"><div class="lifeline shop-icon">BH</div></div>
+                                <div><strong>Biztonsági Háló:</strong> Ha rosszul válaszolsz, megment a leeséstől, és folytathatod a játékot. A kreditgyűjtő sorozatod azonban ilyenkor is megszakad!</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
                 <p>Jelenlegi egyenleged:</p>
                 <div id="start-credits" class="credit-display">0 Kredit</div>
                 <div class="shop-container">
@@ -305,7 +462,6 @@
                     <button id="start-normal-game" class="btn">Normál Játék (1x Nyeremény)</button>
                     <button id="start-risky-game" class="btn">Kockázatos Ugrás (2x Nyeremény, -500 K Tét)</button>
                 </div>
-                <!-- === NAPI BÓNUSZ SZEKCIÓ === -->
                 <div class="daily-bonus-container">
                     <h2>Napi Bónusz</h2>
                     <p id="current-date-display"></p>
@@ -359,10 +515,6 @@
                     </svg>
                     <div id="question-counter"></div>
                 </div>
-                <div id="progress-container">
-                    <div id="progress-bar"></div>
-                    <div id="progress-milestone"></div>
-                </div>
                 <div id="lifelines-container">
                     <div class="lifeline-wrapper" data-tooltip="Két helytelen választ eltávolít.">
                         <div id="lifeline-fiftyfifty" class="lifeline">50/50<span class="count">0</span></div>
@@ -374,7 +526,14 @@
                         <div id="lifeline-safetynet" class="lifeline">BH<span class="count">0</span></div>
                     </div>
                 </div>
-                <button id="header-next-button">Következő híd</button>
+                <div id="progress-container">
+                    <div id="progress-bar"></div>
+                    <div id="progress-milestone"></div>
+                </div>
+                <div id="header-controls">
+                    <div id="total-credits-display">0 Kredit</div>
+                    <button id="header-next-button">Következő híd</button>
+                </div>
             </div>
             <p id="question-text"></p>
             <div id="bridge-scene">
@@ -383,8 +542,12 @@
             </div>
             <div id="feedback-container">
                 <div id="result"></div>
+                <div id="potential-winnings-display"></div>
                 <div id="explanation-container" class="info-box"></div>
-                <button id="end-game-button" class="btn">Játék befejezése</button>
+                <div class="feedback-buttons">
+                    <button id="bank-button" class="btn">Bank</button>
+                    <button id="end-game-button" class="btn">Játék befejezése</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1104,6 +1267,7 @@
         const MILESTONE_CREDITS = 150;
         const PRICES = { fiftyFifty: 250, swap: 350, safetyNet: 500 };
         const STREAK_BONUSES = [100, 125, 150, 175, 200, 250, 300];
+        const QUESTION_REWARDS = [50, 75, 100, 150, 200, 250, 350, 500, 750, 1000]; // Rewards based on streak
         let currentQuestionIndex = 0;
         let gameQuestions = [];
         let unusedQuestionPool = [];
@@ -1120,6 +1284,7 @@
         const explanationContainer = document.getElementById('explanation-container');
         const nextButton = document.getElementById('header-next-button');
         const endGameButton = document.getElementById('end-game-button');
+        const bankButton = document.getElementById('bank-button');
         const progressBar = document.getElementById('progress-bar');
         const progressMilestone = document.getElementById('progress-milestone');
         const startCreditsEl = document.getElementById('start-credits');
@@ -1141,6 +1306,10 @@
         const bonusStatusEl = document.getElementById('bonus-status');
         const dateDisplayEl = document.getElementById('current-date-display');
         const streakMeterEl = document.getElementById('streak-meter');
+        const totalCreditsDisplay = document.getElementById('total-credits-display');
+        const potentialWinningsDisplay = document.getElementById('potential-winnings-display');
+        const toggleRulesBtn = document.getElementById('toggle-rules-btn');
+        const rulesContent = document.getElementById('rules-content');
 
 
         // --- STATE MANAGEMENT ---
@@ -1174,6 +1343,12 @@
             checkDailyBonus();
             showView('start');
         }
+
+        toggleRulesBtn.addEventListener('click', () => {
+            const isHidden = rulesContent.style.display === 'none' || rulesContent.style.display === '';
+            rulesContent.style.display = isHidden ? 'block' : 'none';
+            toggleRulesBtn.textContent = isHidden ? 'Játékszabályzat elrejtése' : 'Játékszabályzat megnyitása';
+        });
 
         buyFiftyFiftyBtn.addEventListener('click', () => {
              if (gameState.totalCredits >= PRICES.fiftyFifty) {
@@ -1293,16 +1468,18 @@
             if (isWin) {
                 finalCreditsChange = creditsChange;
             } else {
-                const wagerLost = currentRoundState.isRisky ? RISKY_WAGER : 0;
-                finalCreditsChange = currentRoundState.milestoneCreditsEarned - wagerLost;
+                finalCreditsChange = currentRoundState.milestoneCreditsEarned;
             }
 
             gameState.totalCredits += finalCreditsChange;
             saveGameState();
             endTitleEl.textContent = isWin ? "Sikeres Átkelés!" : "Játék Vége";
-            endMessageEl.textContent = isWin ? "Gratulálok, sikeresen átjutottál mind a 10 hídon!" : `Sajnos leestél a(z) ${currentQuestionIndex + 1}. hídnál.`;
-            endCreditsChangeEl.textContent = `${finalCreditsChange >= 0 ? '+' : ''}${finalCreditsChange} Kredit`;
-            endCreditsChangeEl.style.color = finalCreditsChange >= 0 ? 'var(--correct-color)' : 'var(--incorrect-color)';
+            endMessageEl.textContent = isWin ? "Gratulálok, sikeresen átjutottál mind a 10 hídon és bezsebelted a főnyereményt!" : `Sajnos leestél a(z) ${currentQuestionIndex + 1}. hídnál. A nem bankolt krediteket elvesztetted.`;
+            
+            const displayChange = isWin ? finalCreditsChange : (currentRoundState.isRisky ? finalCreditsChange - RISKY_WAGER : finalCreditsChange);
+
+            endCreditsChangeEl.textContent = `${displayChange >= 0 ? '+' : ''}${displayChange} Kredit`;
+            endCreditsChangeEl.style.color = displayChange >= 0 ? 'var(--correct-color)' : 'var(--incorrect-color)';
             endTotalCreditsEl.textContent = `${gameState.totalCredits} Kredit`;
             showView('end');
         }
@@ -1322,6 +1499,8 @@
             currentRoundState.isRisky = isRisky;
             currentRoundState.milestoneCreditsEarned = 0;
             currentRoundState.usedSafetyNetThisTurn = false;
+            currentRoundState.potentialWinnings = 0;
+            currentRoundState.streak = 0; 
             
             if (isRisky) { 
                  if (gameState.totalCredits >= RISKY_WAGER) {
@@ -1352,8 +1531,11 @@
             resultContainer.textContent = '';
             explanationContainer.style.opacity = 0;
             explanationContainer.style.display = 'none';
+            potentialWinningsDisplay.style.opacity = currentRoundState.potentialWinnings > 0 ? 1 : 0;
             nextButton.classList.remove('visible');
             endGameButton.classList.remove('visible');
+            bankButton.classList.remove('visible');
+            bankButton.disabled = false;
 
             fiftyFiftyEl.dataset.usedInRound = 'false';
             swapEl.dataset.usedInRound = 'false';
@@ -1372,7 +1554,7 @@
                 document.querySelector('.options-container').appendChild(bridge);
             });
             lifelinesContainer.style.pointerEvents = 'auto';
-            updateLifelineUI();
+            updateGameUI();
         }
         
         function handleAnswer(selectedBridge) {
@@ -1392,6 +1574,12 @@
                 const correctBridge = Array.from(document.querySelectorAll('.bridge-option')).find(opt => opt.textContent === currentQuestion.answer);
                 
                 if (isCorrect) {
+                    const reward = QUESTION_REWARDS[currentRoundState.streak] || QUESTION_REWARDS[QUESTION_REWARDS.length - 1];
+                    currentRoundState.potentialWinnings += reward;
+                    currentRoundState.streak++;
+                    
+                    potentialWinningsDisplay.style.opacity = 1;
+
                     if (correctBridge) correctBridge.classList.add('correct', 'flashing');
                     gameContainer.classList.add('success-pulse');
                     bridgeScene.classList.add('advance');
@@ -1406,12 +1594,14 @@
                     resultContainer.style.color = 'var(--correct-color)';
 
                 } else { // Incorrect answer
+                    currentRoundState.potentialWinnings = 0; 
+                    currentRoundState.streak = 0; 
+                    
                     selectedBridge.classList.add('incorrect');
                     if (correctBridge) correctBridge.classList.add('correct');
                     if (currentRoundState.lifelines.safetyNet > 0 && !currentRoundState.usedSafetyNetThisTurn) {
                         currentRoundState.lifelines.safetyNet--;
                         currentRoundState.usedSafetyNetThisTurn = true;
-                        updateLifelineUI();
                         resultContainer.textContent = "A BIZTONSÁGI HÁLÓ MEGMENTETT!";
                         resultContainer.style.color = 'var(--selected-color)';
                     } else {
@@ -1420,6 +1610,7 @@
                         resultContainer.style.color = 'var(--incorrect-color)';
                     }
                 }
+                updateGameUI();
 
                 setTimeout(() => {
                     explanationContainer.textContent = currentQuestion.explanation;
@@ -1429,13 +1620,13 @@
                     if (isCorrect || currentRoundState.usedSafetyNetThisTurn) {
                         if (currentQuestionIndex < gameQuestions.length - 1) {
                             nextButton.classList.add('visible');
+                            if (currentRoundState.potentialWinnings > 0) {
+                                bankButton.classList.add('visible');
+                            }
                         } else { // Victory
                             progressBar.style.width = '100%';
-                            const creditsWon = BASE_WIN_CREDITS * (currentRoundState.isRisky ? 2 : 1);
-                            let finalWinAmount = creditsWon;
-                            if(currentRoundState.isRisky) {
-                                finalWinAmount += RISKY_WAGER;
-                            }
+                            const mainPrize = BASE_WIN_CREDITS * (currentRoundState.isRisky ? 2 : 1);
+                            let finalWinAmount = mainPrize + currentRoundState.potentialWinnings;
                             showEndScreen(true, finalWinAmount);
                         }
                     } else { // Loss
@@ -1453,8 +1644,25 @@
             showQuestion();
         };
 
-        // --- LIFELINES LOGIC ---
-        function updateLifelineUI() {
+        bankButton.addEventListener('click', () => {
+            if (currentRoundState.potentialWinnings > 0) {
+                gameState.totalCredits += currentRoundState.potentialWinnings;
+                resultContainer.textContent = `${currentRoundState.potentialWinnings} Kredit sikeresen bankolva!`;
+                currentRoundState.potentialWinnings = 0;
+                currentRoundState.streak = 0; 
+                saveGameState();
+                updateGameUI();
+                bankButton.disabled = true;
+                bankButton.classList.remove('visible');
+                
+                totalCreditsDisplay.classList.add('flash-green');
+                setTimeout(() => totalCreditsDisplay.classList.remove('flash-green'), 1000);
+            }
+        });
+
+        // --- LIFELINES & UI LOGIC ---
+        function updateGameUI() {
+            // Lifelines
             fiftyFiftyEl.querySelector('.count').textContent = currentRoundState.lifelines.fiftyFifty;
             swapEl.querySelector('.count').textContent = currentRoundState.lifelines.swap;
             safetyNetEl.querySelector('.count').textContent = currentRoundState.lifelines.safetyNet;
@@ -1462,13 +1670,21 @@
             fiftyFiftyEl.classList.toggle('used', currentRoundState.lifelines.fiftyFifty === 0 || fiftyFiftyEl.dataset.usedInRound === 'true');
             swapEl.classList.toggle('used', currentRoundState.lifelines.swap === 0 || unusedQuestionPool.length === 0 || swapEl.dataset.usedInRound === 'true');
             safetyNetEl.classList.toggle('used', currentRoundState.lifelines.safetyNet === 0);
+
+            // Credits
+            totalCreditsDisplay.textContent = `${gameState.totalCredits} Kredit`;
+            if (currentRoundState.potentialWinnings > 0) {
+                 potentialWinningsDisplay.textContent = `Kockán forog: ${currentRoundState.potentialWinnings} K (Sorozat: ${currentRoundState.streak})`;
+            } else {
+                potentialWinningsDisplay.textContent = '';
+            }
         }
         
         fiftyFiftyEl.addEventListener('click', () => {
             if (currentRoundState.lifelines.fiftyFifty > 0 && fiftyFiftyEl.dataset.usedInRound !== 'true') {
                 currentRoundState.lifelines.fiftyFifty--;
                 fiftyFiftyEl.dataset.usedInRound = 'true';
-                updateLifelineUI();
+                updateGameUI();
                 const currentQuestion = gameQuestions[currentQuestionIndex];
                 const options = Array.from(document.querySelectorAll('.bridge-option'));
                 const wrongOptions = options.filter(opt => opt.textContent !== currentQuestion.answer);
@@ -1497,7 +1713,9 @@
                 isRisky: false,
                 lifelines: { fiftyFifty: 1, swap: 1, safetyNet: 1 },
                 usedSafetyNetThisTurn: false,
-                milestoneCreditsEarned: 0
+                milestoneCreditsEarned: 0,
+                potentialWinnings: 0,
+                streak: 0
             };
             showStartScreen();
         }
