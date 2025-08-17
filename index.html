@@ -87,7 +87,7 @@
             max-width: 70%;
             margin-bottom: 10px;
         }
-        
+
         .copyright-notice {
             font-size: 0.8em;
             color: rgba(255, 255, 255, 0.6);
@@ -101,8 +101,26 @@
         #header-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
         #game-logo { width: 180px; height: auto; }
         #question-counter { font-size: 1.2em; font-weight: 600; color: var(--primary-color); margin-top: 5px; text-align: center; }
-        #progress-container { width: 100%; height: 20px; background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary-color); border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0, 229, 255, 0.5); }
+        #progress-container { flex-grow: 1; height: 20px; background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary-color); border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0, 229, 255, 0.5); position: relative; }
         #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--secondary-color), var(--primary-color)); border-radius: 20px; transition: width 0.5s ease-out; box-shadow: 0 0 15px var(--primary-color); }
+        
+        /* ÚJ BIZTONSÁGI PONT JELZŐ */
+        #progress-milestone {
+            position: absolute;
+            left: 50%;
+            top: -5px;
+            bottom: -5px;
+            width: 4px;
+            background-color: rgba(255, 196, 0, 0.5);
+            border-radius: 2px;
+            transition: all 0.5s ease;
+        }
+        #progress-milestone.reached {
+            background-color: var(--selected-color);
+            box-shadow: 0 0 10px var(--selected-color);
+            transform: scaleY(1.5);
+        }
+
         #header-next-button {
             background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)); color: #fff; padding: 10px 25px; border: none; border-radius: 50px;
             cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 0 20px rgba(255, 0, 193, 0.5);
@@ -240,7 +258,10 @@
                     <svg id="game-logo" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradientHeader" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" style="stop-color:var(--secondary-color)" /><stop offset="100%" style="stop-color:var(--primary-color)" /></linearGradient><filter id="logoGlowHeader"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#logoGlowHeader)"><path d="M 30 65 L 70 15 L 110 65 M 100 45 L 170 45" stroke="url(#logoGradientHeader)" stroke-width="10" stroke-linecap="round" fill="none"/><text x="100" y="90" font-family="Poppins, sans-serif" font-size="24" font-weight="600" fill="url(#logoGradientHeader)" text-anchor="middle">AZ UGRÁS</text></g></svg>
                     <div id="question-counter"></div>
                 </div>
-                <div id="progress-container"><div id="progress-bar"></div></div>
+                <div id="progress-container">
+                    <div id="progress-bar"></div>
+                    <div id="progress-milestone"></div>
+                </div>
                 <div id="lifelines-container">
                     <div id="lifeline-fiftyfifty" class="lifeline">50/50<span class="count">0</span></div>
                     <div id="lifeline-swap" class="lifeline">CSERE<span class="count">0</span></div>
@@ -707,10 +728,12 @@
     { question: "Melyik a legnagyobb ismert csillag a Világegyetemben?", options: ["Betelgeuse", "UY Scuti", "Rigel", "VY Canis Majoris"], answer: "UY Scuti", explanation: "Az UY Scuti egy vörös hiperóriás, amelynek sugara a Napénak körülbelül 1700-szorosa. Ha a Naprendszerünk közepén lenne, a Jupitert is elnyelné." },
     { question: "Melyik a legnagyobb ismert organizmus a Földön?", options: ["Kék bálna", "Pando (nyárfakolónia)", "Óriás tintahal", "Kaliforniai mamutfenyő"], answer: "Pando (nyárfakolónia)", explanation: "A Pando nevű, reszkető nyárfákból álló klónkolónia Utah-ban egyetlen élőlénynek számít, becsült tömege 6000 tonna és területe 43 hektár." },
 ];
-        // Game state and constants
+       // Game state and constants
         const TOTAL_GAME_QUESTIONS = 10;
         const BASE_WIN_CREDITS = 1000;
         const RISKY_WAGER = 500;
+        const MILESTONE_QUESTION = 5; // ÚJ: Az 5. kérdés után van a biztonsági pont
+        const MILESTONE_CREDITS = 150; // ÚJ: Ennyi kreditet ér a biztonsági pont
         const PRICES = { fiftyFifty: 250, swap: 350, safetyNet: 500 };
         let currentQuestionIndex = 0;
         let gameQuestions = [];
@@ -729,6 +752,7 @@
         const nextButton = document.getElementById('header-next-button');
         const endGameButton = document.getElementById('end-game-button');
         const progressBar = document.getElementById('progress-bar');
+        const progressMilestone = document.getElementById('progress-milestone'); // ÚJ
         const startCreditsEl = document.getElementById('start-credits');
         const buyFiftyFiftyBtn = document.getElementById('buy-fiftyfifty');
         const buySwapBtn = document.getElementById('buy-swap');
@@ -806,12 +830,21 @@
 
         // --- END SCREEN LOGIC ---
         function showEndScreen(isWin, creditsChange) {
-            gameState.totalCredits += creditsChange;
+            // Módosított logika: Veszteség esetén a biztonsági pont kreditjeit adjuk hozzá
+            let finalCreditsChange;
+            if (isWin) {
+                finalCreditsChange = creditsChange;
+            } else {
+                const wagerLost = currentRoundState.isRisky ? RISKY_WAGER : 0;
+                finalCreditsChange = currentRoundState.milestoneCreditsEarned - wagerLost;
+            }
+
+            gameState.totalCredits += finalCreditsChange;
             saveGameState();
             endTitleEl.textContent = isWin ? "Sikeres Átkelés!" : "Játék Vége";
             endMessageEl.textContent = isWin ? "Gratulálok, sikeresen átjutottál mind a 10 hídon!" : `Sajnos leestél a(z) ${currentQuestionIndex + 1}. hídnál.`;
-            endCreditsChangeEl.textContent = `${creditsChange >= 0 ? '+' : ''}${creditsChange} Kredit`;
-            endCreditsChangeEl.style.color = creditsChange >= 0 ? 'var(--correct-color)' : 'var(--incorrect-color)';
+            endCreditsChangeEl.textContent = `${finalCreditsChange >= 0 ? '+' : ''}${finalCreditsChange} Kredit`;
+            endCreditsChangeEl.style.color = finalCreditsChange >= 0 ? 'var(--correct-color)' : 'var(--incorrect-color)';
             endTotalCreditsEl.textContent = `${gameState.totalCredits} Kredit`;
             showView('end');
         }
@@ -828,8 +861,15 @@
 
         function startGame(isRisky) {
             currentQuestionIndex = 0;
+            // Áthelyezve az init-be, de itt is megerősítjük a reset-et
             currentRoundState.isRisky = isRisky;
-            if (isRisky) { gameState.totalCredits -= RISKY_WAGER; }
+            currentRoundState.milestoneCreditsEarned = 0;
+            currentRoundState.usedSafetyNetThisTurn = false;
+            
+            if (isRisky) { 
+                // A tét levonása a játék indításakor történik
+                // A visszanyerés a showEndScreen logikájában van kezelve nyerés esetén
+            }
             
             const shuffledAll = [...allQuestions];
             shuffleArray(shuffledAll);
@@ -843,6 +883,10 @@
         function showQuestion() {
             gameContainer.classList.remove('success-pulse', 'fail-shake');
             bridgeScene.classList.remove('advance');
+            
+            // Ha már elértük a biztonsági pontot, a jelző maradjon aktív
+            progressMilestone.classList.toggle('reached', currentRoundState.milestoneCreditsEarned > 0);
+            
             progressBar.style.width = `${(currentQuestionIndex / TOTAL_GAME_QUESTIONS) * 100}%`;
             const currentQuestion = gameQuestions[currentQuestionIndex];
             questionCounter.textContent = `Híd: ${currentQuestionIndex + 1} / ${TOTAL_GAME_QUESTIONS}`;
@@ -891,11 +935,20 @@
                     if (correctBridge) correctBridge.classList.add('correct', 'flashing');
                     gameContainer.classList.add('success-pulse');
                     bridgeScene.classList.add('advance');
-                    resultContainer.textContent = "SIKERES UGRÁS!";
+                    
+                    // --- BIZTONSÁGI PONT LOGIKA ---
+                    if ((currentQuestionIndex + 1) === MILESTONE_QUESTION && currentRoundState.milestoneCreditsEarned === 0) {
+                        currentRoundState.milestoneCreditsEarned = MILESTONE_CREDITS;
+                        resultContainer.textContent = `Biztonsági Pont! ${MILESTONE_CREDITS} Kredit biztosítva!`;
+                        progressMilestone.classList.add('reached');
+                    } else {
+                         resultContainer.textContent = "SIKERES UGRÁS!";
+                    }
                     resultContainer.style.color = 'var(--correct-color)';
-                } else {
+
+                } else { // Helytelen válasz
                     selectedBridge.classList.add('incorrect');
-                    if (correctBridge) correctBridge.classList.add('correct'); // Show correct without flashing
+                    if (correctBridge) correctBridge.classList.add('correct');
                     if (currentRoundState.lifelines.safetyNet > 0) {
                         currentRoundState.lifelines.safetyNet--;
                         currentRoundState.usedSafetyNetThisTurn = true;
@@ -917,20 +970,21 @@
                     if (isCorrect || currentRoundState.usedSafetyNetThisTurn) {
                         if (currentQuestionIndex < gameQuestions.length - 1) {
                             nextButton.classList.add('visible');
-                        } else {
-                            setTimeout(() => {
-                                progressBar.style.width = '100%';
-                                const creditsWon = BASE_WIN_CREDITS * (currentRoundState.isRisky ? 2 : 1) + (currentRoundState.isRisky ? RISKY_WAGER : 0);
-                                showEndScreen(true, creditsWon);
-                            }, 1500);
+                        } else { // Győzelem
+                            progressBar.style.width = '100%';
+                            const creditsWon = BASE_WIN_CREDITS * (currentRoundState.isRisky ? 2 : 1);
+                            let finalWinAmount = creditsWon;
+                            if(currentRoundState.isRisky) {
+                                finalWinAmount += RISKY_WAGER; // Visszakapja a tétet
+                            }
+                            showEndScreen(true, finalWinAmount);
                         }
-                    } else {
-                        // VÉGE A JÁTÉKNAK - GOMB MEGJELENÍTÉSE
-                        const creditsLost = currentRoundState.isRisky ? RISKY_WAGER : 0;
+                    } else { // Veszteség
+                        const wagerLost = currentRoundState.isRisky ? RISKY_WAGER : 0;
                         endGameButton.classList.add('visible');
-                        endGameButton.onclick = () => showEndScreen(false, -creditsLost);
+                        endGameButton.onclick = () => showEndScreen(false, -wagerLost);
                     }
-                }, 500);
+                }, 1500);
 
             }, 1500);
         }
@@ -981,11 +1035,17 @@
         // --- INITIALIZATION ---
         function init() {
             loadGameState();
+            // A currentRoundState itt nullázódik minden új játék előtt
             currentRoundState = {
                 isRisky: false,
                 lifelines: { fiftyFifty: 0, swap: 0, safetyNet: 0 },
-                usedSafetyNetThisTurn: false
+                usedSafetyNetThisTurn: false,
+                milestoneCreditsEarned: 0 // ÚJ: Biztosított kreditek nullázása
             };
+             // Kockázatos játék tétjének levonása a játék elején
+            if (currentRoundState.isRisky && gameState.totalCredits >= RISKY_WAGER) {
+                gameState.totalCredits -= RISKY_WAGER;
+            }
             showStartScreen();
         }
 
