@@ -52,7 +52,7 @@
             padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
             border: 1px solid rgba(0, 229, 255, 0.3); backdrop-filter: blur(10px);
             position: relative; z-index: 1; display: flex; flex-direction: column;
-            transition: box-shadow 0.5s ease;
+            transition: box-shadow 0.5s ease, max-width 0.5s ease, min-height 0.5s ease;
         }
         #game-container.success-pulse { animation: success-pulse 1.5s ease-out; }
         #game-container.fail-shake { animation: fail-shake 0.6s ease-in-out; }
@@ -67,10 +67,11 @@
             max-height: 100%;
             overflow-y: auto;
          }
-        .overlay-content { max-width: 600px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .overlay-content { max-width: 600px; text-align: center; display: flex; flex-direction: column; align-items: center; margin: 0 auto; }
         .overlay-content h1 { font-size: 3em; color: var(--primary-color); text-shadow: 0 0 15px var(--primary-color); }
         .overlay-content p { font-size: 1.2em; line-height: 1.5; max-width: 90%; margin-bottom: 20px; }
         .credit-display { font-size: 1.8em; font-weight: bold; margin: 15px 0; color: var(--selected-color); }
+        .credit-display.flash-green { animation: flashGreen 1s ease-out; }
         .overlay-content .btn, .btn {
             background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)); color: #fff; padding: 12px 30px; border: none; border-radius: 50px;
             cursor: pointer; font-size: 1.2em; font-weight: 600; transition: all 0.3s ease;
@@ -78,9 +79,18 @@
         }
         .overlay-content .btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 0, 193, 0.8); }
         .overlay-content .btn:disabled { background: #555; cursor: not-allowed; box-shadow: none; opacity: 0.6; }
-        .shop-container, .wager-container { width: 100%; margin: 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }
+        .shop-container, .wager-container, .daily-bonus-container { width: 100%; margin: 15px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }
+        
         .shop-item { display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; }
-        .shop-item p { font-size: 0.9em; color: rgba(255, 255, 255, 0.7); margin-top: 0; margin-bottom: 5px; }
+        .shop-item-row { display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 15px; }
+        .shop-icon { pointer-events: none; flex-shrink: 0; }
+        .shop-item p, #bonus-status { font-size: 0.9em; color: rgba(255, 255, 255, 0.7); margin-top: 5px; margin-bottom: 5px; flex-basis: 100%; min-height: 1em; }
+
+        /* === NAPI BÓNUSZ STÍLUSOK === */
+        #current-date-display { font-size: 1.1em; color: var(--primary-color); margin-bottom: 10px; text-align: center; }
+        #streak-meter { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        .streak-day { width: 30px; height: 30px; border: 2px solid var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; transition: all 0.3s ease; }
+        .streak-day.active { background-color: var(--correct-color); color: #000; border-color: #fff; box-shadow: 0 0 10px var(--correct-color); transform: scale(1.1); }
 
         #start-logo {
             width: 250px;
@@ -104,7 +114,6 @@
         #progress-container { flex-grow: 1; height: 20px; background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary-color); border-radius: 20px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0, 229, 255, 0.5); position: relative; }
         #progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--secondary-color), var(--primary-color)); border-radius: 20px; transition: width 0.5s ease-out; box-shadow: 0 0 15px var(--primary-color); }
         
-        /* ÚJ BIZTONSÁGI PONT JELZŐ */
         #progress-milestone {
             position: absolute;
             left: 50%;
@@ -131,11 +140,16 @@
         
         /* Lifelines */
         #lifelines-container { display: flex; gap: 10px; align-items: center; }
+        .lifeline-wrapper { position: relative; }
         .lifeline { background: rgba(0,0,0,0.4); border: 1px solid var(--primary-color); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; font-weight: bold; position: relative; }
         .lifeline:hover:not(.used) { background: var(--primary-color); color: #000; }
         .lifeline.used { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
         .lifeline .count { position: absolute; bottom: -5px; right: -5px; background: var(--secondary-color); border-radius: 50%; font-size: 0.8em; width: 20px; height: 20px; line-height: 20px; }
         #lifeline-swap { font-size: 0.8em; }
+
+        .lifeline-wrapper::after { content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background-color: #000; color: #fff; padding: 8px 12px; border-radius: 5px; font-size: 0.9em; font-weight: normal; white-space: nowrap; z-index: 10; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; pointer-events: none; }
+        .lifeline-wrapper::before { content: ''; position: absolute; bottom: 125%; margin-bottom: -5px; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; z-index: 10; pointer-events: none; }
+        .lifeline-wrapper:hover::before, .lifeline-wrapper:hover::after { opacity: 1; visibility: visible; }
 
         /* Question & Answers */
         #question-text { font-size: 1.4em; font-weight: 600; line-height: 1.4; display: flex; align-items: center; justify-content: center; padding: 0 20px; margin: 20px auto 20px auto; min-height: 3em; }
@@ -148,7 +162,13 @@
         .bridge-option { background: linear-gradient(rgba(0, 229, 255, 0.1), rgba(0, 229, 255, 0.3)); color: #fff; border: 2px solid var(--primary-color); border-radius: 10px; cursor: pointer; font-size: 1.1em; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(0, 229, 255, 0.5); width: 200px; height: 120px; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; opacity: 0; animation: revealBridge 0.5s forwards ease-out; }
         .bridge-option span { text-shadow: 0 0 5px #000; overflow-wrap: break-word; word-break: break-word; }
         .bridge-option:not(.disabled):hover { transform: scale(1.05) translateZ(10px); box-shadow: 0 0 25px var(--primary-color); }
-        .bridge-option.selected { border-color: var(--selected-color); box-shadow: 0 0 25px var(--selected-color); animation: pulseSelected 1.5s infinite; }
+        
+        .bridge-option.is-chosen {
+            border-color: var(--selected-color);
+            transform: scale(1.05) translateZ(10px);
+            animation: glow-gold 0.8s infinite alternate;
+        }
+
         .bridge-option.disabled { cursor: not-allowed; pointer-events: none; }
         .bridge-option.disabled-by-lifeline { opacity: 0.3 !important; background: #333; border-color: #555; pointer-events: none; cursor: not-allowed; }
         .bridge-option.correct { animation: none; background: var(--correct-color); border-color: #fff; color: #000; box-shadow: 0 0 30px var(--correct-color); opacity: 1 !important; transform: scale(1.1) translateZ(20px); }
@@ -175,26 +195,52 @@
         /* ANIMATIONS */
         @keyframes revealBridge { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes flashCorrect { 50% { background: #fff; color: #000; } }
-        @keyframes pulseSelected { 0% { box-shadow: 0 0 25px var(--selected-color); border-color: var(--selected-color); } 50% { box-shadow: 0 0 40px 10px var(--selected-color); } 100% { box-shadow: 0 0 25px var(--selected-color); border-color: var(--selected-color); } }
+        @keyframes glow-gold {
+            from { box-shadow: 0 0 15px 2px var(--selected-color); }
+            to { box-shadow: 0 0 35px 10px var(--selected-color); }
+        }
         @keyframes success-pulse { 0% { box-shadow: 0 0 30px rgba(0, 229, 255, 0.2); } 50% { box-shadow: 0 0 60px 15px rgba(0, 255, 155, 0.7); } 100% { box-shadow: 0 0 30px rgba(0, 229, 255, 0.2); } }
         @keyframes fail-shake { 0%, 100% { transform: translateX(0); box-shadow: 0 0 30px rgba(0, 229, 255, 0.2); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); } 20%, 40%, 60%, 80% { transform: translateX(10px); } 50% { box-shadow: 0 0 80px 20px rgba(255, 61, 113, 0.8); } }
+        @keyframes flashGreen {
+            50% { color: var(--correct-color); text-shadow: 0 0 10px var(--correct-color); transform: scale(1.1); }
+        }
+        
+        /* WIDESCREEN DESKTOP STYLES */
+        @media (min-width: 1201px) {
+            #game-container, .overlay-content-wrapper {
+                max-width: 90vw;
+                min-height: 90vh;
+                justify-content: space-around;
+            }
+            .overlay-content h1 { font-size: 3.5em; }
+            .overlay-content p { font-size: 1.4em; }
+            .overlay-content { max-width: 800px; }
+            #question-text { font-size: 1.8em; margin: 1vh 0; }
+            #bridge-scene { height: 300px; }
+            .options-container { gap: 30px; }
+            .bridge-option { width: 240px; height: 140px; font-size: 1.2em; }
+            #feedback-container { min-height: 180px; }
+        }
 
-        /* RESPONSIVE STYLES */
+        /* RESPONSIVE STYLES (for mobile) */
         @media (max-width: 900px) {
             body { overflow: auto; padding: 10px; }
-            #game-container, .overlay-content-wrapper { padding: 15px; }
+            #game-container, .overlay-content-wrapper { padding: 15px; min-height: 0; }
             #game-header { flex-wrap: wrap; justify-content: space-between; gap: 15px; }
             #header-left, #lifelines-container { order: 1; }
             #header-next-button { order: 2; }
             #progress-container { order: 3; width: 100%; height: 15px; }
             #game-logo { width: 140px; }
-            .overlay-content h1 { font-size: 2.2em; } .overlay-content p { font-size: 1.1em; }
+            .overlay-content h1 { font-size: 2.2em; } 
+            .overlay-content p { font-size: 1.1em; }
             #question-text { font-size: 1.2em; }
             #bridge-scene { perspective: none; height: auto; }
             .future-bridge { display: none; }
             .options-container { transform: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
             .bridge-option { width: 90%; max-width: 400px; height: auto; min-height: 70px; font-size: 1em; }
             #explanation-container { font-size: 1em; }
+            .shop-item-row { flex-wrap: wrap; }
+            .lifeline-wrapper:hover::before, .lifeline-wrapper:hover::after { display: none; }
         }
     </style>
 </head>
@@ -206,7 +252,26 @@
     <div id="start-screen" class="overlay-screen game-view">
         <div class="overlay-content-wrapper">
             <div class="overlay-content">
-                 <svg id="start-logo" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradient" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" style="stop-color:var(--secondary-color)" /><stop offset="100%" style="stop-color:var(--primary-color)" /></linearGradient><filter id="logoGlow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#logoGlow)"><path d="M 30 65 L 70 15 L 110 65 M 100 45 L 170 45" stroke="url(#logoGradient)" stroke-width="10" stroke-linecap="round" fill="none"/><text x="100" y="90" font-family="Poppins, sans-serif" font-size="24" font-weight="600" fill="url(#logoGradient)" text-anchor="middle">AZ UGRÁS</text></g></svg>
+                 <svg id="start-logo" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="50%" x2="100%" y2="50%">
+                            <stop offset="0%" style="stop-color:var(--secondary-color)" />
+                            <stop offset="100%" style="stop-color:var(--primary-color)" />
+                        </linearGradient>
+                        <filter id="logoGlow">
+                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <g filter="url(#logoGlow)">
+                        <path d="M 30 65 L 70 15 L 110 65 M 100 45 L 170 45" stroke="url(#logoGradient)" stroke-width="10" stroke-linecap="round" fill="none"/>
+                        <text x="100" y="90" font-family="Poppins, sans-serif" font-size="24" font-weight="600" fill="url(#logoGradient)" text-anchor="middle">AZ UGRÁS</text>
+                        <text x="100" y="105" font-family="Poppins, sans-serif" font-size="10" font-weight="400" fill="url(#logoGradient)" text-anchor="middle" letter-spacing="1.5">KOCKÁZAT ÉS NYEREMÉNY</text>
+                    </g>
+                </svg>
                  <p class="copyright-notice">&copy; Copyright by: Robi</p>
                 <p>Játssz és gyűjts Krediteket, hogy segítségeket vásárolhass és nagyobb téteket tehess meg!</p>
                 <p>Jelenlegi egyenleged:</p>
@@ -214,15 +279,24 @@
                 <div class="shop-container">
                     <h2>Segítségek vásárlása</h2>
                     <div class="shop-item">
-                         <button id="buy-fiftyfifty" class="btn">50/50 (250 K)</button>
+                        <div class="shop-item-row">
+                            <div class="lifeline shop-icon">50/50</div>
+                            <button id="buy-fiftyfifty" class="btn">50/50 (250 K)</button>
+                        </div>
                          <p>A számítógép elvesz két helytelen választ.</p>
                     </div>
                      <div class="shop-item">
-                         <button id="buy-swap" class="btn">Kérdéscsere (350 K)</button>
+                         <div class="shop-item-row">
+                            <div class="lifeline shop-icon" style="font-size: 0.8em;">CSERE</div>
+                            <button id="buy-swap" class="btn">Kérdéscsere (350 K)</button>
+                        </div>
                          <p>Lecseréli a jelenlegi kérdést egy véletlen újra.</p>
                     </div>
                     <div class="shop-item">
-                        <button id="buy-safetynet" class="btn">Biztonsági Háló (500 K)</button>
+                        <div class="shop-item-row">
+                            <div class="lifeline shop-icon">BH</div>
+                            <button id="buy-safetynet" class="btn">Biztonsági Háló (500 K)</button>
+                        </div>
                         <p>Rossz válasz esetén megment a kieséstől.</p>
                     </div>
                 </div>
@@ -230,6 +304,14 @@
                     <h2>Válassz Tétet!</h2>
                     <button id="start-normal-game" class="btn">Normál Játék (1x Nyeremény)</button>
                     <button id="start-risky-game" class="btn">Kockázatos Ugrás (2x Nyeremény, -500 K Tét)</button>
+                </div>
+                <!-- === NAPI BÓNUSZ SZEKCIÓ === -->
+                <div class="daily-bonus-container">
+                    <h2>Napi Bónusz</h2>
+                    <p id="current-date-display"></p>
+                    <div id="streak-meter"></div>
+                    <button id="claim-bonus-btn" class="btn">Bónusz begyűjtése</button>
+                    <p id="bonus-status"></p>
                 </div>
             </div>
         </div>
@@ -255,7 +337,26 @@
         <div id="game-container">
             <div id="game-header">
                 <div id="header-left">
-                    <svg id="game-logo" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradientHeader" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" style="stop-color:var(--secondary-color)" /><stop offset="100%" style="stop-color:var(--primary-color)" /></linearGradient><filter id="logoGlowHeader"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#logoGlowHeader)"><path d="M 30 65 L 70 15 L 110 65 M 100 45 L 170 45" stroke="url(#logoGradientHeader)" stroke-width="10" stroke-linecap="round" fill="none"/><text x="100" y="90" font-family="Poppins, sans-serif" font-size="24" font-weight="600" fill="url(#logoGradientHeader)" text-anchor="middle">AZ UGRÁS</text></g></svg>
+                     <svg id="game-logo" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradientHeader" x1="0%" y1="50%" x2="100%" y2="50%">
+                                <stop offset="0%" style="stop-color:var(--secondary-color)" />
+                                <stop offset="100%" style="stop-color:var(--primary-color)" />
+                            </linearGradient>
+                            <filter id="logoGlowHeader">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <g filter="url(#logoGlowHeader)">
+                            <path d="M 30 65 L 70 15 L 110 65 M 100 45 L 170 45" stroke="url(#logoGradientHeader)" stroke-width="10" stroke-linecap="round" fill="none"/>
+                            <text x="100" y="90" font-family="Poppins, sans-serif" font-size="24" font-weight="600" fill="url(#logoGradientHeader)" text-anchor="middle">AZ UGRÁS</text>
+                             <text x="100" y="105" font-family="Poppins, sans-serif" font-size="10" font-weight="400" fill="url(#logoGradientHeader)" text-anchor="middle" letter-spacing="1.5">KOCKÁZAT ÉS NYEREMÉNY</text>
+                        </g>
+                    </svg>
                     <div id="question-counter"></div>
                 </div>
                 <div id="progress-container">
@@ -263,9 +364,15 @@
                     <div id="progress-milestone"></div>
                 </div>
                 <div id="lifelines-container">
-                    <div id="lifeline-fiftyfifty" class="lifeline">50/50<span class="count">0</span></div>
-                    <div id="lifeline-swap" class="lifeline">CSERE<span class="count">0</span></div>
-                    <div id="lifeline-safetynet" class="lifeline">SN<span class="count">0</span></div>
+                    <div class="lifeline-wrapper" data-tooltip="Két helytelen választ eltávolít.">
+                        <div id="lifeline-fiftyfifty" class="lifeline">50/50<span class="count">0</span></div>
+                    </div>
+                    <div class="lifeline-wrapper" data-tooltip="Lecseréli a kérdést egy újra.">
+                        <div id="lifeline-swap" class="lifeline">CSERE<span class="count">0</span></div>
+                    </div>
+                    <div class="lifeline-wrapper" data-tooltip="Megment a kieséstől egy rossz válasz esetén.">
+                        <div id="lifeline-safetynet" class="lifeline">BH<span class="count">0</span></div>
+                    </div>
                 </div>
                 <button id="header-next-button">Következő híd</button>
             </div>
@@ -285,11 +392,277 @@
     <script>
         // GAME DATA
         const allQuestions = [
-            { question: "Melyik állat NEM emlős?", options: ["Denevér", "Bálna", "Pingvin", "Delfin"], answer: "Pingvin", explanation: "A pingvin a madarak osztályába tartozik, mivel tojásokkal szaporodik és tollai vannak, nem pedig szőre." },
-    { question: "Melyik bolygót nevezik a 'Vörös Bolygónak'?", options: ["Vénusz", "Mars", "Jupiter", "Neptunusz"], answer: "Mars", explanation: "A Mars felszínét vöröses színű vas-oxid por borítja, ez adja jellegzetes színét." },
-    { question: "Ki írta a magyar Himnuszt?", options: ["Petőfi Sándor", "Vörösmarty Mihály", "Kölcsey Ferenc", "Arany János"], answer: "Kölcsey Ferenc", explanation: "A Himnusz szövegét Kölcsey Ferenc írta 1823-ban, zenéjét pedig Erkel Ferenc szerezte." },
-    { question: "Mi a 'Szilícium-völgy' központja?", options: ["Los Angeles", "San Francisco", "San Jose", "Seattle"], answer: "San Jose", explanation: "Bár az egész régióra kiterjed, San Jose tekinthető a Szilícium-völgy gazdasági és kulturális központjának." },
-    { question: "Melyik kontinensen található a Szahara sivatag?", options: ["Ázsia", "Ausztrália", "Dél-Amerika", "Afrika"], answer: "Afrika", explanation: "A Szahara a világ legnagyobb forró sivataga, amely Észak-Afrika nagy részét lefedi." },
+            { question: "Mi Kanada fővárosa?", options: ["Toronto", "Vancouver", "Ottawa", "Montréal"], answer: "Ottawa", explanation: "Bár nem a legnagyobb, Ottawa Kanada politikai és adminisztratív központja." },
+            { question: "Melyik erő tartja a bolygókat a Nap körüli pályájukon?", options: ["Mágnesesség", "Súrlódás", "Nukleáris erő", "Gravitáció"], answer: "Gravitáció", explanation: "A Nap hatalmas tömegvonzása, a gravitáció tartja a bolygókat keringési pályájukon." },
+            { question: "Melyik híres magyar étel fő összetevője a paprika és a paradicsom?", options: ["Töltött káposzta", "Gulyásleves", "Lecsó", "Túrós csusza"], answer: "Lecsó", explanation: "A lecsó egy tradicionális magyar egytálétel, amelynek alapja a hagyma, paprika és paradicsom." },
+            { question: "Mit jelent a 'CPU' rövidítés a számítástechnikában?", options: ["Központi Tápellátó Egység", "Központi Feldolgozó Egység", "Számítógép Személyi Egység", "Alapvető Programozási Egység"], answer: "Központi Feldolgozó Egység", explanation: "A CPU (Central Processing Unit) a számítógép 'agya', amely a legtöbb számítási feladatot elvégzi." },
+            { question: "Ki írta a 'Rómeó és Júlia' című drámát?", options: ["Charles Dickens", "William Shakespeare", "Molière", "Goethe"], answer: "William Shakespeare", explanation: "A 'Rómeó és Júlia' az angol drámaíró, William Shakespeare egyik legismertebb tragédiája." },
+            { question: "Melyik a legkisebb kontinens?", options: ["Európa", "Antarktisz", "Dél-Amerika", "Ausztrália"], answer: "Ausztrália", explanation: "Terület és népesség alapján is Ausztrália a legkisebb lakott kontinens." },
+            { question: "Melyik bolygó a 'Vörös Bolygó'?", options: ["Vénusz", "Jupiter", "Mars", "Szaturnusz"], answer: "Mars", explanation: "A Mars felszínén található vas-oxid (rozsda) miatt kapta a 'Vörös Bolygó' elnevezést." },
+            { question: "Hány csápja van egy polipnak?", options: ["6", "8", "10", "12"], answer: "8", explanation: "A polipoknak nyolc karjuk van, amelyeket tapadásra, mozgásra és zsákmányszerzésre használnak." },
+            { question: "Melyik a legkeményebb természetes ásvány?", options: ["Kvarc", "Topáz", "Korund", "Gyémánt"], answer: "Gyémánt", explanation: "A Mohs-féle keménységi skálán a gyémánt a legmagasabb, 10-es értéket kapja, ezzel a legkeményebb." },
+            { question: "Mi a neve Semmelweis Ignácnak, aki az 'anyák megmentőjeként' ismert?", options: ["A higiénia atyja", "A sebészet úttörője", "A vakcinák feltalálója", "A modern aneszteziológia megalapítója"], answer: "A higiénia atyja", explanation: "Semmelweis Ignác vezette be a klórmeszes kézfertőtlenítést, drasztikusan csökkentve a gyermekágyi láz okozta halálozást." },
+            { question: "Melyik tudományág foglalkozik a gombák tanulmányozásával?", options: ["Ornitológia", "Mikológia", "Entomológia", "Ichthiológia"], answer: "Mikológia", explanation: "A mikológia a biológia azon ága, amely a gombák tudományos tanulmányozásával foglalkozik." },
+{ question: "Melyik városban írták alá az Egyesült Államok függetlenségi nyilatkozatát?", options: ["New York", "Boston", "Washington D.C.", "Philadelphia"], answer: "Philadelphia", explanation: "A Függetlenségi Nyilatkozatot 1776-ban Philadelphiában, Pennsylvania államban fogadták el." },
+{ question: "Mi a neve a skandináv mitológiában a főistenek csarnokának, ahová a csatában elesett hősök kerülnek?", options: ["Asgard", "Midgard", "Valhalla", "Jotunheim"], answer: "Valhalla", explanation: "A Valhalla Odin csarnoka Asgardban, ahová a valkűrök kísérik a csatában hősiesen elesett harcosok felét." },
+{ question: "Melyik a periódusos rendszer vegyjele az ezüstnek?", options: ["Au", "Ag", "Si", "Pb"], answer: "Ag", explanation: "Az ezüst vegyjele 'Ag', amely a latin 'argentum' szóból származik." },
+{ question: "Ki rendezte a 'Titanic' és az 'Avatar' című filmeket?", options: ["Steven Spielberg", "George Lucas", "Christopher Nolan", "James Cameron"], answer: "James Cameron", explanation: "Mindkét kasszasiker filmet a kanadai rendező, James Cameron jegyzi, aki a technikai újításairól is híres." },
+{ question: "Hogyan nevezik a borok szakértőjét?", options: ["Barista", "Sommelier", "Séf", "Mixológus"], answer: "Sommelier", explanation: "A sommelier (ejtsd: szomelié) magasan képzett borszakértő, aki éttermekben felel a borlapért és a borok felszolgálásáért." },
+{ question: "Ki írta az '1984' című disztópikus regényt?", options: ["Aldous Huxley", "George Orwell", "Ray Bradbury", "Philip K. Dick"], answer: "George Orwell", explanation: "Az '1984' George Orwell leghíresebb műve, amely a totális állami megfigyelés és a gondolatrendőrség veszélyeire figyelmeztet." },
+{ question: "Melyik város a flamenco tánc és zene központja?", options: ["Madrid", "Barcelona", "Sevilla", "Lisszabon"], answer: "Sevilla", explanation: "Bár egész Andalúziában népszerű, Sevillát tartják a flamenco kulturális fővárosának." },
+{ question: "Mi a neve a Föld legkülső, szilárd rétegének?", options: ["Asztenoszféra", "Litoszféra", "Mezoszféra", "Földmag"], answer: "Litoszféra", explanation: "A litoszféra (kőzetburok) magában foglalja a Föld kérgét és a földköpeny legfelső, szilárd részét." },
+{ question: "Melyik a legnagyobb sziget a Földközi-tengeren?", options: ["Kréta", "Ciprus", "Szardínia", "Szicília"], answer: "Szicília", explanation: "Szicília, Olaszország autonóm régiója, a Földközi-tenger legnagyobb szigete." },
+{ question: "Melyik sportágban ismert Ayrton Senna neve?", options: ["Rali", "Tenisz", "Labdarúgás", "Forma-1"], answer: "Forma-1", explanation: "Ayrton Senna egy legendás brazil autóversenyző, aki háromszoros Forma-1-es világbajnok volt." },
+{ question: "Ki volt a görög mitológiában a bölcsesség és a hadviselés istennője?", options: ["Héra", "Artemisz", "Athéné", "Aphrodité"], answer: "Athéné", explanation: "Athéné volt az egyik legfontosabb olümposzi isten, a bölcsesség, a stratégia, a művészetek és a kézművesség védnöke." },
+{ question: "Melyik ország zászlaja az egyetlen, amelyik nem négyszög alakú?", options: ["Svájc", "Vatikán", "Nepál", "Japán"], answer: "Nepál", explanation: "Nepál nemzeti zászlaja két, egymás fölötti háromszögből áll, ezzel a világ egyetlen nem négyszögletes állami zászlaja." },
+{ question: "Mi a neve a folyamatnak, amely során a szilárd anyag közvetlenül gázzá alakul?", options: ["Párolgás", "Olvadás", "Szublimáció", "Kondenzáció"], answer: "Szublimáció", explanation: "A szublimáció a halmazállapot-változás egyik fajtája, amikor a folyékony fázis kimarad. Ilyen például a szárazjég (szilárd CO2) párolgása." },
+{ question: "Ki volt az a magyar feltaláló, aki a dinamó elvét is felfedezte?", options: ["Jedlik Ányos", "Puskás Tivadar", "Neumann János", "Bíró László"], answer: "Jedlik Ányos", explanation: "Bár a felfedezést Siemensnek tulajdonítják, Jedlik Ányos évekkel korábban, 1861-ben már megalkotta az öngerjesztés elvén működő dinamót." },
+{ question: "Melyik a legmagasabb hegy Japánban?", options: ["Kita-hegy", "Fudzsi", "Hotaka-hegy", "Aino-hegy"], answer: "Fudzsi", explanation: "A Fudzsi (Fujisan) egy aktív vulkán, 3776 méteres magasságával Japán legmagasabb és egyben legszentebb hegye." },
+{ question: "Melyik filmben hangzik el az idézet: 'Houston, van egy problémánk!'?", options: ["Armageddon", "Apollo 13", "Mentőexpedíció", "Csillagok között"], answer: "Apollo 13", explanation: "Az ikonikus mondatot az Apollo 13 űrhajó legénysége mondta a földi irányításnak, miután egy oxigéntartály felrobbant." },
+{ question: "Melyik a leggyakoribb nyelv az internetes tartalmakat tekintve?", options: ["Kínai", "Spanyol", "Angol", "Orosz"], answer: "Angol", explanation: "Bár a kínaiul beszélők száma a legtöbb, az interneten található weboldalak több mint 50%-a angol nyelvű." },
+{ question: "Hogyan nevezik a magasság iránti irracionális félelmet?", options: ["Agorafóbia", "Klausztrofóbia", "Akrofóbia", "Hidrofóbia"], answer: "Akrofóbia", explanation: "Az akrofóbia a magasságtól való kóros félelem, amely szédülést és pánikrohamokat okozhat." },
+{ question: "Melyik a világ leghosszabb folyója Ázsiában?", options: ["Jangce", "Sárga-folyó", "Mekong", "Ob"], answer: "Jangce", explanation: "A Jangce (Kék-folyó) több mint 6300 km hosszú, ezzel Ázsia leghosszabb és a világ harmadik leghosszabb folyója." },
+{ question: "Ki írta a 'Száz év magány' című regényt?", options: ["Jorge Luis Borges", "Gabriel García Márquez", "Mario Vargas Llosa", "Pablo Neruda"], answer: "Gabriel García Márquez", explanation: "A 'Száz év magány' a kolumbiai Nobel-díjas író, Gabriel García Márquez 1967-es főműve, a mágikus realizmus alapműve." },
+{ question: "Melyik elem vegyjele a K?", options: ["Kalcium", "Kálium", "Réz", "Kripton"], answer: "Kálium", explanation: "A kálium vegyjele a 'K', amely a neolatin 'kalium' szóból ered. A kalcium jele 'Ca'." },
+{ question: "Melyik sportágban ismert a 'slam dunk' (zsákolás) kifejezés?", options: ["Röplabda", "Kosárlabda", "Kézilabda", "Vízilabda"], answer: "Kosárlabda", explanation: "A 'slam dunk' egy látványos dobásforma a kosárlabdában, amikor a játékos a labdát a gyűrűbe tömi." },
+{ question: "Melyik festő stílusára jellemző a kubizmus?", options: ["Claude Monet", "Salvador Dalí", "Pablo Picasso", "Vincent van Gogh"], answer: "Pablo Picasso", explanation: "Pablo Picasso és Georges Braque fejlesztették ki a kubizmust, amely a tárgyakat geometrikus formákra bontva ábrázolja." },
+{ question: "Mi a neve a vikingek által használt ábécének?", options: ["Cirill", "Glagolita", "Futhark", "Ogham"], answer: "Futhark", explanation: "A rúnaírás vagy futhark a germán népek, köztük a vikingek által használt ábécé volt." },
+{ question: "Hány állatövi jegy van a nyugati asztrológiában?", options: ["10", "11", "12", "13"], answer: "12", explanation: "A nyugati asztrológia 12 állatövi jegyet (zodiákust) különböztet meg, mint például a Kos, Bika, Ikrek stb." },
+{ question: "Melyik a legkisebb független állam Dél-Amerikában?", options: ["Uruguay", "Suriname", "Guyana", "Ecuador"], answer: "Suriname", explanation: "Terület és népesség alapján is Suriname a legkisebb szuverén állam a dél-amerikai kontinensen." },
+{ question: "Ki a zeneszerzője a 'Diótörő' című balettnek?", options: ["Mozart", "Sztravinszkij", "Csajkovszkij", "Prokofjev"], answer: "Csajkovszkij", explanation: "Pjotr Iljics Csajkovszkij orosz zeneszerző egyik leghíresebb és legnépszerűbb műve a 'Diótörő' balett." },
+{ question: "Melyik a leggyakoribb fém a Föld kérgében?", options: ["Vas", "Alumínium", "Réz", "Szilícium"], answer: "Alumínium", explanation: "Bár a Föld magja főleg vasból áll, a földkéregben az oxigén és szilícium után az alumínium a leggyakoribb elem és a leggyakoribb fém." },
+{ question: "Melyik országban található a legtöbb tó?", options: ["Finnország", "Oroszország", "Kanada", "USA"], answer: "Kanada", explanation: "Bár Finnországot 'az ezer tó országának' nevezik, Kanada rendelkezik a legtöbb tóval a világon, több millióval." },
+{ question: "Ki volt az a csillagász, aki először állította, hogy a Föld kering a Nap körül?", options: ["Ptolemaiosz", "Galilei", "Kopernikusz", "Kepler"], answer: "Kopernikusz", explanation: "Nikolausz Kopernikusz lengyel csillagász volt az, aki a heliocentrikus (Napközpontú) világképet kidolgozta." },
+{ question: "Melyik a legnagyobb sziget a Karib-térségben?", options: ["Hispaniola", "Jamaica", "Kuba", "Puerto Rico"], answer: "Kuba", explanation: "Kuba a Nagy-Antillák szigetcsoportjának és egyben az egész Karib-térségnek a legnagyobb szigete." },
+{ question: "Mit jelent a 'déjà vu' kifejezés?", options: ["Jó utat!", "Már láttam", "Édes élet", "Viszlát!"], answer: "Már láttam", explanation: "A 'déjà vu' egy francia kifejezés, amely arra az érzésre utal, amikor valaki úgy érzi, hogy egy teljesen új helyzetet már átélt korábban." },
+{ question: "Melyik kémiai elem adja a csontok szilárdságát?", options: ["Kálium", "Nátrium", "Vas", "Kalcium"], answer: "Kalcium", explanation: "A kalcium a csontok és a fogak legfontosabb ásványi anyaga, elengedhetetlen a keménységükhöz és szerkezetükhöz." },
+{ question: "Ki az az egyiptomi isten, akit sakálfejjel ábrázoltak és a balzsamozáshoz köthető?", options: ["Ré", "Hórusz", "Anubisz", "Ozirisz"], answer: "Anubisz", explanation: "Anubisz a holtak és a balzsamozás istene volt az ókori egyiptomi mitológiában, akit sakálfejű emberként ábrázoltak." },
+{ question: "Melyik a leggyorsabb állat a vízben?", options: ["Kardszárnyú delfin", "Közönséges delfin", "Fekete marlin", "Tonhal"], answer: "Fekete marlin", explanation: "A fekete marlin (vagy vitorláskardoshal) képes akár 130 km/h sebességgel is úszni, ezzel a leggyorsabb vízi állat." },
+{ question: "Melyik város Oroszország második legnagyobb városa?", options: ["Novoszibirszk", "Kazány", "Szentpétervár", "Jekatyerinburg"], answer: "Szentpétervár", explanation: "Szentpétervár (korábban Leningrád) Oroszország második legnépesebb városa és fontos kulturális központja." },
+{ question: "Ki írta a 'Háború és béke' című monumentális regényt?", options: ["Dosztojevszkij", "Csehov", "Turgenyev", "Tolsztoj"], answer: "Tolsztoj", explanation: "A 'Háború és béke' Lev Tolsztoj orosz író egyik legismertebb műve, amely a napóleoni háborúk korát mutatja be." },
+{ question: "Mi a neve a Föld körül keringő legnagyobb mesterséges objektumnak?", options: ["Hubble űrtávcső", "Nemzetközi Űrállomás", "Szputnyik-1", "Tiangong űrállomás"], answer: "Nemzetközi Űrállomás", explanation: "A Nemzetközi Űrállomás (ISS) egy alacsony Föld körüli pályán keringő, lakott űrbázis, a legnagyobb ember alkotta szerkezet az űrben." },
+{ question: "Melyik magyar találmány a golyóstoll?", options: ["Bíró László József", "Jedlik Ányos", "Puskás Tivadar", "Irinyi János"], answer: "Bíró László József", explanation: "Bíró László József újságíró találta fel a modern golyóstollat, amelyet világszerte 'biro'-ként is ismernek." },
+{ question: "Melyik a legnagyobb magyar tó?", options: ["Velencei-tó", "Fertő-tó", "Tisza-tó", "Balaton"], answer: "Balaton", explanation: "A Balaton Közép-Európa legnagyobb tava, amelyet gyakran 'a magyar tengernek' is neveznek." },
+{ question: "Ki írta a 'Toldi' trilógiát?", options: ["Petőfi Sándor", "Arany János", "Vörösmarty Mihály", "Jókai Mór"], answer: "Arany János", explanation: "A 'Toldi', a 'Toldi estéje' és a 'Toldi szerelme' című elbeszélő költemények Arany János fő művei közé tartoznak." },
+{ question: "Melyik a világ legmagasabb fafajtája?", options: ["Tölgyfa", "Fenyő", "Tengerparti mamutfenyő", "Eukaliptusz"], answer: "Tengerparti mamutfenyő", explanation: "A kaliforniai tengerparti mamutfenyő (Sequoia sempervirens) a legmagasabbra növő fa a világon, egyes példányai meghaladják a 115 métert." },
+{ question: "Mi a neve a leghíresebb magyar borvidéknek, amely az aszúról ismert?", options: ["Eger", "Villány", "Tokaj", "Szekszárd"], answer: "Tokaj", explanation: "A Tokaji borvidék világhírű a nemespenésszel készült édes boráról, a Tokaji Aszúról." },
+{ question: "Melyik a legnehezebb hangszer?", options: ["Hárfa", "Zongora", "Orgona", "Bőgő"], answer: "Orgona", explanation: "A nagy koncertorgonák több ezer sípból állnak és több tonnát is nyomhatnak, ezzel a legnehezebb hangszerek." },
+{ question: "Melyik országban van a világ leghosszabb vasúti alagútja?", options: ["Japán", "Svájc", "Kína", "Norvégia"], answer: "Svájc", explanation: "A Gotthard-bázisalagút Svájcban 57 km hosszú, ezzel a világ leghosszabb vasúti alagútja." },
+{ question: "Ki a főszereplője az 'Indiana Jones' filmeknek?", options: ["Harrison Ford", "Sean Connery", "Tom Hanks", "George Clooney"], answer: "Harrison Ford", explanation: "Harrison Ford alakítja a kalandvágyó régészprofesszort, Indiana Jonest." },
+{ question: "Melyik a legnagyobb majomfaj?", options: ["Orangután", "Csimpánz", "Gorilla", "Gibbon"], answer: "Gorilla", explanation: "A keleti gorilla a legnagyobb ma élő főemlős." },
+{ question: "Melyik csatában tűnt el Petőfi Sándor?", options: ["Pákozdi", "Isaszegi", "Segesvári", "Temesvári"], answer: "Segesvári", explanation: "Petőfi Sándor az 1849-es segesvári csatában tűnt el, és a legvalószínűbb teória szerint ott is esett el." },
+{ question: "Mi a 'káma szútra'?", options: ["Indiai harcművészet", "Meditációs technika", "Ókori szexuális tankönyv", "Jóga póz"], answer: "Ókori szexuális tankönyv", explanation: "A Kámaszútra egy ókori indiai szanszkrit nyelvű mű a szerelemről, az erotikáról és az érzelmi beteljesedésről." },
+{ question: "Melyik ország a szülőhazája a tangónak?", options: ["Spanyolország", "Brazília", "Argentína", "Kuba"], answer: "Argentína", explanation: "A tangó egy Argentínából és Uruguayból származó, szenvedélyes társastánc és zenei stílus." },
+{ question: "Melyik a leghosszabb autópálya-hálózat a világon?", options: ["USA", "Németország", "Kína", "Kanada"], answer: "Kína", explanation: "Kína rendelkezik a világ leghosszabb és legkiterjedtebb gyorsforgalmi úthálózatával." },
+{ question: "Melyik a legészakibb főváros a világon?", options: ["Helsinki", "Oslo", "Reykjavík", "Stockholm"], answer: "Reykjavík", explanation: "Izland fővárosa, Reykjavík, a világ legészakabbra fekvő fővárosa." },
+{ question: "Melyik 'James Bond' filmben szerepelt először Daniel Craig?", options: ["A Quantum csendje", "Skyfall", "Casino Royale", "Spectre"], answer: "Casino Royale", explanation: "Daniel Craig 2006-ban a 'Casino Royale' című filmben debütált James Bond szerepében." },
+{ question: "Melyik a leggyakoribb ásvány a Földön?", options: ["Kvarc", "Földpát", "Csillám", "Bridgmanit"], answer: "Bridgmanit", explanation: "A bridgmanit a Föld alsó köpenyének fő alkotóeleme, így ez teszi ki a bolygó teljes térfogatának legnagyobb részét." },
+{ question: "Melyik a legkisebb állam az USA-ban (terület szerint)?", options: ["Delaware", "Connecticut", "Rhode Island", "New Jersey"], answer: "Rhode Island", explanation: "Rhode Island a legkisebb amerikai állam, területe alig több mint 3000 négyzetkilométer." },
+{ question: "Melyik magyar tudós nevéhez fűződik a C-vitamin felfedezése?", options: ["Szent-Györgyi Albert", "Semmelweis Ignác", "Jedlik Ányos", "Teller Ede"], answer: "Szent-Györgyi Albert", explanation: "Szent-Györgyi Albert 1937-ben orvosi Nobel-díjat kapott a C-vitamin izolálásáért és biológiai szerepének feltárásáért." },
+{ question: "Mi a neve a skót férfi népviseletnek?", options: ["Kimono", "Sari", "Kilt", "Poncho"], answer: "Kilt", explanation: "A kilt egy térdig érő, rakott szoknya, amely a skót nemzeti viselet legismertebb darabja." },
+{ question: "Melyik a legmélyebb tó a világon?", options: ["Tanganyika-tó", "Kaszpi-tenger", "Bajkál-tó", "Felső-tó"], answer: "Bajkál-tó", explanation: "A szibériai Bajkál-tó több mint 1600 méteres mélységével a világ legmélyebb tava, és a Föld édesvízkészletének ötödét tartalmazza." },
+{ question: "Melyik hangszeren játszott Niccolò Paganini?", options: ["Zongora", "Cselló", "Hegedű", "Gitár"], answer: "Hegedű", explanation: "Paganini minden idők egyik legnagyobb hegedűvirtuóza volt, akinek technikája legendássá vált." },
+{ question: "Ki az a magyar származású bűvész, aki a szabadulóművészetéről volt híres?", options: ["David Copperfield", "Harry Houdini", "Criss Angel", "Rodolfo"], answer: "Harry Houdini", explanation: "Harry Houdini (születési nevén Weisz Erik) magyar származású amerikai illuzionista és szabadulóművész volt." },
+{ question: "Melyik a világ legmagasabb fűféléje?", options: ["Kukorica", "Cukornád", "Bambusz", "Búza"], answer: "Bambusz", explanation: "A bambuszok a pázsitfűfélék családjába tartoznak, és egyes fajaik akár 30 méter magasra is megnőhetnek." },
+{ question: "Melyik kontinensen található a Viktória-vízesés?", options: ["Dél-Amerika", "Ázsia", "Afrika", "Ausztrália"], answer: "Afrika", explanation: "A Viktória-vízesés a Zambézi folyón, Zambia és Zimbabwe határán található, és a világ egyik leglátványosabb vízesése." },
+{ question: "Mi a neve a leghíresebb magyar fűszernek?", options: ["Bors", "Kömény", "Fűszerpaprika", "Majoranna"], answer: "Fűszerpaprika", explanation: "A magyar fűszerpaprika (gyakran csak paprika) a magyar konyha alapvető és világszerte ismert fűszere." },
+{ question: "Ki volt a 'Pop Királya'?", options: ["Elvis Presley", "Michael Jackson", "Prince", "Freddie Mercury"], answer: "Michael Jackson", explanation: "Michael Jackson amerikai énekes, dalszerző és táncos a popzene történetének egyik legmeghatározóbb alakja, akit a 'Pop Királyaként' emlegetnek." },
+{ question: "Melyik állat szerepel a Ferrari logójában?", options: ["Bika", "Ágaskodó ló", "Oroszlán", "Sas"], answer: "Ágaskodó ló", explanation: "A 'Cavallino Rampante', azaz az ágaskodó ló, a Ferrari autómárka világhírű szimbóluma." },
+{ question: "Melyik a legnagyobb emberi sejt?", options: ["Idegsejt", "Izomsejt", "Petesejt", "Csontsejt"], answer: "Petesejt", explanation: "Az emberi petesejt a legnagyobb sejt a testben, szabad szemmel is látható." },
+{ question: "Ki az 'Odüsszeia' című eposz szerzője?", options: ["Szophoklész", "Vergilius", "Homérosz", "Ovidius"], answer: "Homérosz", explanation: "Az 'Odüsszeia', amely Odüsszeusz tízéves hazatérését meséli el, az ókori görög költőnek, Homérosznak tulajdonított két nagy eposz egyike." },
+{ question: "Melyik a legnagyobb a ragadozó macskafélék közül?", options: ["Oroszlán", "Tigris", "Jaguár", "Leopárd"], answer: "Tigris", explanation: "A szibériai tigris a legnagyobb a ma élő macskafélék közül." },
+{ question: "Melyik országban található az Angkorvat templomkomplexum?", options: ["Thaiföld", "Vietnám", "Kambodzsa", "Laosz"], answer: "Kambodzsa", explanation: "Az Angkorvat a világ legnagyobb vallási épületegyüttese, amely Kambodzsában található és a Khmer Birodalom idején épült." },
+{ question: "Melyik hangszeren játszott Mozart csodagyerekként?", options: ["Hegedű", "Cselló", "Fuvola", "Csembaló"], answer: "Csembaló", explanation: "Mozart már egészen fiatal korában virtuóz módon játszott csembalón (a zongora elődjén) és hegedűn is." },
+{ question: "Melyik város Törökország fővárosa?", options: ["Isztambul", "Ankara", "Izmir", "Antalya"], answer: "Ankara", explanation: "Bár Isztambul a legnagyobb és legismertebb város, Törökország fővárosa 1923 óta a központi fekvésű Ankara." },
+{ question: "Mi a neve az Alice Csodaországban írójának?", options: ["J.K. Rowling", "Lewis Carroll", "Roald Dahl", "Beatrix Potter"], answer: "Lewis Carroll", explanation: "Az 'Alice Csodaországban' című klasszikus meseregényt Lewis Carroll (eredeti nevén Charles Lutwidge Dodgson) írta." },
+{ question: "Hány szívből áll egy polip keringési rendszere?", options: ["Egy", "Kettő", "Három", "Négy"], answer: "Három", explanation: "A polipoknak három szívük van: két szív a kopoltyúkhoz pumpálja a vért, a harmadik pedig a test többi részébe." },
+{ question: "Ki volt az a fizikus, aki a gravitációs törvényt megalkotta?", options: ["Albert Einstein", "Galileo Galilei", "Isaac Newton", "Niels Bohr"], answer: "Isaac Newton", explanation: "Sir Isaac Newton angol fizikus és matematikus fogalmazta meg az általános tömegvonzás törvényét." },
+{ question: "Melyik amerikai város beceneve a 'Szeles város' (The Windy City)?", options: ["New York", "Chicago", "San Francisco", "Boston"], answer: "Chicago", explanation: "Chicago kapta a 'Szeles város' becenevet, bár ez eredetileg a politikusaira utalt, nem a tényleges időjárásra." },
+{ question: "Mit jelent a 'www' a webcímek elején?", options: ["Wide World Web", "World Web Wide", "World Wide Web", "Web World Wide"], answer: "World Wide Web", explanation: "A 'www' a World Wide Web rövidítése, ami a világhálót, az interneten működő, egymással összekapcsolt dokumentumok rendszerét jelenti." },
+{ question: "Melyik a legnagyobb sivatag Ausztráliában?", options: ["Nagy-homoksivatag", "Gibson-sivatag", "Nagy-Viktória-sivatag", "Simpson-sivatag"], answer: "Nagy-Viktória-sivatag", explanation: "A Nagy-Viktória-sivatag a legnagyobb sivatagi terület Ausztráliában, amely Nyugat- és Dél-Ausztrália államokon terül el." },
+{ question: "Melyik híres festmény ábrázolja Isten és Ádám kezének összeérintését?", options: ["Az utolsó ítélet", "Ádám teremtése", "Athéni iskola", "Tavasz"], answer: "Ádám teremtése", explanation: "Ez a híres jelenet Michelangelo 'Ádám teremtése' című freskójának központi eleme, amely a Sixtus-kápolna mennyezetén található." },
+{ question: "Melyik országban zajlik a Tour de France kerékpárverseny túlnyomó része?", options: ["Olaszország", "Spanyolország", "Belgium", "Franciaország"], answer: "Franciaország", explanation: "A Tour de France a világ leghíresebb kerékpárversenye, amelynek útvonala főként Franciaországon halad keresztül." },
+{ question: "Hogyan nevezik a japán virágrendezés művészetét?", options: ["Origami", "Bonsai", "Ikebana", "Kintsugi"], answer: "Ikebana", explanation: "Az ikebana a hagyományos japán virágrendezési művészet, amely a harmóniára, a formára és a vonalvezetésre összpontosít." },
+{ question: "Ki volt az a római hadvezér, aki átkelt az Alpokon elefántokkal?", options: ["Julius Caesar", "Scipio Africanus", "Hannibal", "Pompeius"], answer: "Hannibal", explanation: "Hannibal karthágói hadvezér a második pun háború során, Kr. e. 218-ban vezette át seregét, elefántokkal együtt, az Alpokon." },
+{ question: "Mi a neve a leghíresebb ókori görög jósdának?", options: ["Dodona", "Delphoi", "Olümpia", "Epidaurusz"], answer: "Delphoi", explanation: "A Delphoi jósda volt az ókori görög világ legfontosabb jóshelye, ahol Apollón isten papnője, Püthia jövendölt." },
+{ question: "Melyik állat szerepel a magyar ezerforintos bankjegy hátoldalán?", options: ["Griffmadár", "Holló", "Turulmadár", "Herkules-kút"], answer: "Herkules-kút", explanation: "Az 1000 forintos bankjegy hátoldalán a visegrádi királyi palota Herkules-kútja látható." },
+{ question: "Melyik ókori világ hét csodája létezik még ma is nagyrészt épségben?", options: ["Artemisz temploma", "Gízai nagy piramis", "Rodoszi kolosszus", "Szemirámisz függőkertje"], answer: "Gízai nagy piramis", explanation: "Az ókori világ hét csodája közül egyedül a gízai nagy piramis (Kheopsz-piramis) maradt fenn." },
+{ question: "Melyik országban ered a Duna folyó?", options: ["Ausztria", "Svájc", "Németország", "Csehország"], answer: "Németország", explanation: "A Duna a németországi Fekete-erdőben ered, és innen folyik kelet felé a Fekete-tengerbe." },
+{ question: "Melyik sportágban lett tízszeres világbajnok Kelly Slater?", options: ["Szörf", "Gördeszka", "Hódeszka", "BMX"], answer: "Szörf", explanation: "Kelly Slater amerikai profi szörfös, akit széles körben minden idők legnagyobbjának tartanak, 11 világbajnoki címmel." },
+{ question: "Melyik a leggyakoribb vezetéknév Magyarországon?", options: ["Kovács", "Szabó", "Tóth", "Nagy"], answer: "Nagy", explanation: "A 'Nagy' a leggyakrabban előforduló családnév Magyarországon, ezt követi a Kovács, a Tóth és a Szabó." },
+{ question: "Melyik a periódusos rendszer legkisebb rendszámú nemesgáza?", options: ["Neon", "Argon", "Hélium", "Kripton"], answer: "Hélium", explanation: "A hélium (He) rendszáma 2, ezzel a legelső és legkönnyebb a nemesgázok sorában." },
+{ question: "Ki az a mitológiai alak, aki ellopta a tüzet az istenektől az emberek számára?", options: ["Héraklész", "Prométheusz", "Ikarosz", "Perszeusz"], answer: "Prométheusz", explanation: "Prométheusz titán volt, aki a görög mitológia szerint ellopta a tüzet, és az embereknek adta, amiért Zeusz szigorúan megbüntette." },
+{ question: "Mi a címe a Star Wars filmsorozat legelső (időrendben készült) filmjének?", options: ["A Birodalom visszavág", "Egy új remény", "Baljós árnyak", "A Jedi visszatér"], answer: "Egy új remény", explanation: "Az 1977-ben bemutatott, eredetileg csak 'Star Wars' címen futó filmet később 'Egy új remény' alcímmel látták el, ez a IV. epizód." },
+{ question: "Melyik a legdélebbi kontinens?", options: ["Dél-Amerika", "Ausztrália", "Afrika", "Antarktisz"], answer: "Antarktisz", explanation: "Az Antarktisz a Föld legdélebbi, leghidegebb és legmagasabban fekvő kontinense, amelyet a Déli-sarkpont is magában foglal." },
+{ question: "Melyik országban található a legtöbb vulkán?", options: ["Japán", "Chile", "USA", "Indonézia"], answer: "Indonézia", explanation: "Indonézia a csendes-óceáni 'Tűzgyűrűn' helyezkedik el, és több mint 130 aktív vulkánnak ad otthont, ami a legtöbb a világon." },
+{ question: "Melyik magyar városban található a Déri Múzeum, ahol Munkácsy Krisztus-trilógiája látható?", options: ["Szeged", "Debrecen", "Pécs", "Miskolc"], answer: "Debrecen", explanation: "Munkácsy Mihály monumentális festményei, a 'Krisztus Pilátus előtt', a 'Golgota' és az 'Ecce Homo' a debreceni Déri Múzeumban vannak kiállítva." },
+{ question: "Ki volt az a tudós, aki kifejlesztette a gyermekbénulás elleni vakcinát?", options: ["Alexander Fleming", "Louis Pasteur", "Robert Koch", "Jonas Salk"], answer: "Jonas Salk", explanation: "Jonas Salk amerikai orvoskutató fejlesztette ki az első hatékony és biztonságos vakcinát a gyermekbénulás (polio) ellen az 1950-es években." },
+{ question: "Hogyan nevezik a számítógépes betűtípusok tervezésének művészetét?", options: ["Kalligráfia", "Tipográfia", "Szerigráfia", "Litográfia"], answer: "Tipográfia", explanation: "A tipográfia a betűkkel való tervezés és a szöveg vizuális megjelenítésének művészete és technikája." },
+{ question: "Melyik ország ad otthont a legtöbb UNESCO Világörökségi helyszínnek?", options: ["Kína", "Spanyolország", "Németország", "Olaszország"], answer: "Olaszország", explanation: "Olaszország büszkélkedhet a legtöbb (több mint 55) UNESCO Világörökségi helyszínnel, köszönhetően gazdag történelmi és kulturális örökségének." },
+{ question: "Mi a neve a leghosszabb magyarországi folyónak?", options: ["Duna", "Tisza", "Rába", "Dráva"], answer: "Tisza", explanation: "Bár a Duna a bővizűbb, a Tisza magyarországi szakasza a leghosszabb, 597 km." },
+{ question: "Melyik a legnagyobb ragadozó hal?", options: ["Tigriscápa", "Nagy pörölycápa", "Nagy fehér cápa", "Bikacápa"], answer: "Nagy fehér cápa", explanation: "A nagy fehér cápa a világ legnagyobb ismert ragadozó hala, hossza meghaladhatja a 6 métert is." },
+{ question: "Ki az a görög filozófus, aki Platón tanítványa és Nagy Sándor nevelője volt?", options: ["Szókratész", "Arisztotelész", "Diogenész", "Püthagorasz"], answer: "Arisztotelész", explanation: "Arisztotelész az ókori görög filozófia egyik legfontosabb alakja, Platón tanítványa és a nyugati tudományos gondolkodás megalapozója." },
+{ question: "Mi a neve a híres párizsi múzeumnak, ahol a Mona Lisa található?", options: ["Musée d'Orsay", "Centre Pompidou", "Louvre", "Musée Rodin"], answer: "Louvre", explanation: "A Louvre a világ egyik legnagyobb és leghíresebb múzeuma, amely Párizs szívében található." },
+{ question: "Melyik a leggyakoribb kémiai elem a Földön (tömeg alapján)?", options: ["Oxigén", "Szilícium", "Vas", "Alumínium"], answer: "Vas", explanation: "A Föld teljes tömegét tekintve a vas a leggyakoribb elem (kb. 32%), nagy része a bolygó magjában található." },
+{ question: "Ki volt az első női pilóta, aki átrepülte az Atlanti-óceánt?", options: ["Bessie Coleman", "Harriet Quimby", "Amelia Earhart", "Jacqueline Cochran"], answer: "Amelia Earhart", explanation: "Amelia Earhart amerikai pilóta volt az első nő, aki 1932-ben egyedül, megállás nélkül átrepülte az Atlanti-óceánt." },
+{ question: "Melyik kontinensen nincs őshonos hangya?", options: ["Ausztrália", "Antarktisz", "Észak-Amerika", "Európa"], answer: "Antarktisz", explanation: "Az Antarktisz az egyetlen kontinens, ahol a szélsőséges hideg miatt nem élnek hangyák." },
+{ question: "Melyik a világ legmagasabban fekvő hajózható tava?", options: ["Bajkál-tó", "Titicaca-tó", "Felső-tó", "Viktória-tó"], answer: "Titicaca-tó", explanation: "A Titicaca-tó az Andokban, Peru és Bolívia határán található, több mint 3800 méteres magasságban." },
+{ question: "Ki írta a 'Büszkeség és balítélet' című regényt?", options: ["Brontë nővérek", "George Eliot", "Mary Shelley", "Jane Austen"], answer: "Jane Austen", explanation: "A 'Büszkeség és balítélet' Jane Austen angol írónő leghíresebb, 1813-ban megjelent regénye." },
+{ question: "Melyik a legkisebb ország Afrikában?", options: ["Comore-szigetek", "São Tomé és Príncipe", "Seychelle-szigetek", "Gambia"], answer: "Seychelle-szigetek", explanation: "Az Indiai-óceánban található Seychelle-szigetek a legkisebb szuverén állam Afrikában, mind területét, mind népességét tekintve." },
+{ question: "Mi a neve az emberi test leghosszabb idegének?", options: ["Látóideg", "Bolygóideg", "Ülőideg", "Háromosztatú ideg"], answer: "Ülőideg", explanation: "Az ülőideg (nervus ischiadicus) a deréktól egészen a lábujjakig húzódik, ezzel a leghosszabb ideg a testben." },
+{ question: "Melyik a leggyakrabban termesztett gabona a világon?", options: ["Búza", "Rizs", "Kukorica", "Árpa"], answer: "Kukorica", explanation: "A megtermelt mennyiséget tekintve a kukorica a világelső, amelyet a búza és a rizs követ." },
+{ question: "Melyik város Olaszország divatfővárosa?", options: ["Róma", "Firenze", "Milánó", "Velence"], answer: "Milánó", explanation: "Milánó a világ egyik legfontosabb divatközpontja, számos híres divatház székhelye." },
+{ question: "Melyik a Föld legészakibb szárazföldi pontja?", options: ["Grönland északi csúcsa", "Északi-fok", "Kaffeklubben-sziget", "Ferenc József-föld"], answer: "Kaffeklubben-sziget", explanation: "A Grönland partjaitól északra fekvő apró Kaffeklubben-sziget a Föld legészakibb, állandó szárazföldi területe." },
+{ question: "Melyik a legkönnyebb fém a periódusos rendszerben?", options: ["Alumínium", "Magnézium", "Nátrium", "Lítium"], answer: "Lítium", explanation: "A lítium a legkisebb sűrűségű fém és szilárd elem. Sűrűsége fele a vízének, ezért úszik a vízen." },
+{ question: "Melyik állat képes a leghosszabb ideig aludni egyhuzamban?", options: ["Lajhár", "Koala", "Nagy pele", "Barna medve"], answer: "Nagy pele", explanation: "A nagy pele (egy rágcsálófaj) akár 11 hónapot is átalhat a téli álma során, ezzel tartja a rekordot." },
+{ question: "Mi a neve az emberi hang által előállítható legmagasabb hangnak?", options: ["Falzett", "Fejhang", "Sipítóregiszter", "Mellhang"], answer: "Sipítóregiszter", explanation: "A sipítóregiszter (whistle register) az emberi hang legmagasabb regisztere, amely extrém magas, sípszerű hangokat eredményez." },
+{ question: "Melyik a legnagyobb egysejtű élőlény?", options: ["Amőba", "Papucsállatka", "Buborékalga", "Óriás amőba"], answer: "Buborékalga", explanation: "A Valonia ventricosa, vagy buborékalga a világ legnagyobb ismert egysejtű élőlénye, átmérője elérheti a 4-5 centimétert is." },
+{ question: "Melyik a világ legrégebbi, ma is működő egyeteme?", options: ["Bolognai Egyetem", "Oxfordi Egyetem", "Al-Karaouine Egyetem", "Párizsi Egyetem"], answer: "Al-Karaouine Egyetem", explanation: "A marokkói Fezben található Al-Karaouine Egyetemet 859-ben alapították, és az UNESCO is a világ legrégebbi, folyamatosan működő felsőoktatási intézményének ismeri el." },
+{ question: "Melyik országban található a világ legmagasabb vasúti hídja, a Chenab híd?", options: ["Kína", "Svájc", "India", "USA"], answer: "India", explanation: "A Chenab híd Dzsammu és Kasmír régióban ível át egy völgy felett, 359 méterrel a folyó szintje felett, magasabban, mint az Eiffel-torony." },
+{ question: "Melyik a legnagyobb pókfaj a világon (lábfesztávolság szerint)?", options: ["Brazil óriás madárpók", "Góliát madárpók", "Óriás vadászpók", "Tarantula"], answer: "Óriás vadászpók", explanation: "A lábfesztávolságot tekintve a délkelet-ázsiai óriás vadászpók (Heteropoda maxima) a legnagyobb, fesztávolsága elérheti a 30 cm-t is." },
+{ question: "Melyik a leggyakrabban beszélt mesterséges nyelv?", options: ["Ido", "Klingon", "Interlingua", "Eszperantó"], answer: "Eszperantó", explanation: "Az eszperantót a 19. század végén alkották meg, és ma a legszélesebb körben beszélt mesterséges (tervezett) nyelv a világon." },
+{ question: "Melyik a legmélyebb pont a szárazföldön?", options: ["Death Valley", "Kaszpi-mélyföld", "Holt-tenger partja", "Turpan-mélyedés"], answer: "Holt-tenger partja", explanation: "A Holt-tenger partja több mint 430 méterrel a tengerszint alatt fekszik, ezzel a Föld legmélyebb szárazföldi pontja." },
+{ question: "Melyik a világ legdrágábban eladott festménye?", options: ["Mona Lisa", "Salvator Mundi", "A sikoly", "Avignoni kisasszonyok"], answer: "Salvator Mundi", explanation: "Leonardo da Vinci 'Salvator Mundi' (Világmegváltó) című festménye 2017-ben több mint 450 millió dollárért kelt el egy árverésen." },
+{ question: "Melyik a legnagyobb volumenű vízesésrendszer a világon?", options: ["Niagara-vízesés", "Viktória-vízesés", "Iguazú-vízesés", "Angel-vízesés"], answer: "Iguazú-vízesés", explanation: "Az Argentína és Brazília határán található Iguazú-vízesés a legnagyobb vízhozamú, több száz különálló zuhatagból áll." },
+{ question: "Melyik a legkisebb emlős a világon?", options: ["Törpe cickány", "Dongódenevér", "Törpe lajhár", "Egérlemur"], answer: "Dongódenevér", explanation: "A Thaiföldön és Mianmarban élő dongódenevér (vagy disznóorrú denevér) mindössze 2-3 grammos, ezzel a legkisebb ismert emlős." },
+{ question: "Melyik a legcsendesebb hely a Földön?", options: ["Süketszoba (Orfield Labs)", "Atacama-sivatag", "Antarktisz belseje", "Mariana-árok"], answer: "Süketszoba (Orfield Labs)", explanation: "A minneapolisi Orfield Laboratórium süketszobája a hangok 99,99%-át elnyeli. Itt hallani lehet a saját szerveid működését." },
+{ question: "Melyik országban van a világ leghosszabb tengerpartja?", options: ["Ausztrália", "Oroszország", "Kanada", "Indonézia"], answer: "Kanada", explanation: "Kanada rendelkezik a leghosszabb tengerparttal, több mint 243 000 kilométerrel, köszönhetően a rengeteg szigetének és tagolt partvonalának." },
+{ question: "Melyik a legrégebbi, ma is használt írásrendszer?", options: ["Latin ábécé", "Görög ábécé", "Héber ábécé", "Kínai írás"], answer: "Kínai írás", explanation: "A kínai írásjelek több mint 3000 éves múltra tekintenek vissza, és bár sokat változtak, alapjaikban ma is ugyanazt a rendszert használják." },
+{ question: "Melyik a leggyorsabb lift a világon?", options: ["Burj Khalifa", "Shanghai Tower", "Taipei 101", "Guangzhou CTF Centre"], answer: "Guangzhou CTF Centre", explanation: "A Guangzhou CTF Pénzügyi Központ liftje eléri a 75.6 km/h (21 m/s) sebességet is." },
+{ question: "Melyik a legritkább vércsoport?", options: ["A-", "0-", "AB-", "B-"], answer: "AB-", explanation: "Az AB negatív a legritkább vércsoport, a világ népességének kevesebb mint 1%-a rendelkezik vele." },
+{ question: "Melyik a leghosszabb ideig tartó csuklási roham rekordja?", options: ["68 óra", "68 nap", "68 hét", "68 év"], answer: "68 év", explanation: "Az amerikai Charles Osborne 1922-től 1990-ig, 68 éven keresztül folyamatosan csuklott." },
+{ question: "Melyik a legnépesebb város, amely két kontinensen fekszik?", options: ["Suez", "Isztambul", "Orenburg", "Atirau"], answer: "Isztambul", explanation: "Isztambul Törökország legnépesebb városa, amely a Boszporusz partján terül el, egyszerre Európában és Ázsiában." },
+{ question: "Melyik a legmagasabb hőmérséklet, amit valaha a Földön mértek?", options: ["56.7 °C", "54.0 °C", "58.1 °C", "55.2 °C"], answer: "56.7 °C", explanation: "A hivatalosan elismert legmagasabb hőmérsékletet 1913-ban mérték a kaliforniai Death Valley-ben (Halál-völgy), ami 56.7 Celsius-fok volt." },
+{ question: "Melyik a leglátogatottabb ország a világon?", options: ["Spanyolország", "USA", "Kína", "Franciaország"], answer: "Franciaország", explanation: "Franciaország a legnépszerűbb turisztikai célpont, évente több mint 89 millió külföldi látogatóval (a pandémia előtti adatok szerint)." },
+{ question: "Melyik a leghosszabb nevű főváros a világon?", options: ["Bandar Seri Begawan", "Sri Jayawardenepura Kotte", "Bangkok", "Addisz-Abeba"], answer: "Bangkok", explanation: "Bangkok hivatalos, ceremoniális neve 169 betűből áll: Krung Thep Mahanakhon Amon Rattanakosin Mahinthara Ayuthaya..." },
+{ question: "Melyik a leggyakoribb műanyag a világon?", options: ["PVC", "Polipropilén (PP)", "Polietilén (PE)", "PET"], answer: "Polietilén (PE)", explanation: "A polietilén a legelterjedtebb műanyag, amelyet csomagolóanyagoktól kezdve a csöveken át a játékokig rengeteg mindenhez használnak." },
+{ question: "Melyik a legszelesebb hely a Földön?", options: ["Wellington, Új-Zéland", "Mount Washington, USA", "Commonwealth-öböl", "Gruissan, Franciaország"], answer: "Commonwealth-öböl", explanation: "A Commonwealth-öbölben (Antarktisz) rendszeresen mérnek 240 km/h feletti szeleket, ezzel hivatalosan is a Föld legszelesebb helye." },
+{ question: "Melyik a legidősebb fa a világon?", options: ["Sarv-e Abarqu", "Matuzsálem", "Llangernyw Yew", "Alerce Milenario"], answer: "Matuzsálem", explanation: "A kaliforniai Matuzsálem nevű simatűjű szálkásfenyő korát több mint 4850 évre becsülik." },
+{ question: "Melyik a legmagasabb hullám, amin valaha szörföztek?", options: ["19 m", "26.2 m", "30.5 m", "23.8 m"], answer: "26.2 m", explanation: "A német Sebastian Steudtner tartja a Guinness-rekordot, aki 2020-ban egy 26,21 méter magas hullámot lovagolt meg a portugáliai Nazaréban." },
+{ question: "Melyik a legmélyebb ember alkotta lyuk?", options: ["Bingham Canyon bánya", "Berkeley Pit", "Kola-félszigeti fúrás", "Mirnij gyémántbánya"], answer: "Kola-félszigeti fúrás", explanation: "A szovjetek által végzett fúrás elérte a 12 262 méteres mélységet, ezzel ez a legmélyebb pont, ahová az emberiség valaha lefúrt." },
+{ question: "Melyik a leghangosabb állat a Földön?", options: ["Kék bálna", "Nagy ámbráscet", "Bőgőmajom", "Pisztolyrák"], answer: "Nagy ámbráscet", explanation: "A nagy ámbráscet kattogó hangjai elérhetik a 230 decibelt is, ami hangosabb, mint egy felszálló sugárhajtású repülőgép." },
+{ question: "Melyik a leggyorsabb ember alkotta tárgy?", options: ["Voyager 1", "New Horizons", "Juno", "Parker Napszonda"], answer: "Parker Napszonda", explanation: "A NASA Parker Napszondája a Naphoz közelítve elérte a 690 000 km/h sebességet, ezzel a leggyorsabb ember által készített objektum." },
+{ question: "Melyik a legdrágább film, amit valaha készítettek?", options: ["Avatar", "Avatar: A víz útja", "Ismeretlen vizeken", "Végjáték"], answer: "Avatar: A víz útja", explanation: "Az 'Avatar: A víz útja' becsült költségvetése meghaladta a 460 millió dollárt, ezzel minden idők legdrágább filmjévé vált." },
+{ question: "Melyik a leghosszabb ideig tartó háború a történelemben?", options: ["Százéves háború", "Harmincéves háború", "Reconquista", "Pun háborúk"], answer: "Reconquista", explanation: "A Reconquista, azaz az Ibériai-félsziget visszahódítása a móroktól, 711-től 1492-ig tartott, azaz 781 éven át." },
+{ question: "Melyik tudományág foglalkozik a halak tanulmányozásával?", options: ["Herpetológia", "Ornitológia", "Ichthiológia", "Entomológia"], answer: "Ichthiológia", explanation: "Az ichthiológia a zoológia (állattan) azon ága, amely a halak tudományos vizsgálatával foglalkozik." },
+{ question: "Melyik városban gyilkolták meg Martin Luther King Jr.-t?", options: ["Atlanta", "Washington D.C.", "Memphis", "Dallas"], answer: "Memphis", explanation: "A polgárjogi harcost 1968-ban a Tennessee állambeli Memphisben, egy motel erkélyén lőtték le." },
+{ question: "Melyik tengerszoros választja el Európát Afrikától?", options: ["Bering-szoros", "Doveri-szoros", "Gibraltári-szoros", "Bosporus"], answer: "Gibraltári-szoros", explanation: "A Gibraltári-szoros köti össze az Atlanti-óceánt a Földközi-tengerrel, és választja el Spanyolországot Marokkótól." },
+{ question: "Melyik művészeti irányzat, melynek Henri Matisse volt a vezéralakja, a vad, természetellenes színhasználatáról ismert?", options: ["Kubizmus", "Impresszionizmus", "Fovizmus", "Szürrealizmus"], answer: "Fovizmus", explanation: "A fovisták ('vadak') az érzelmek kifejezésére élénk, tiszta színeket használtak, elrugaszkodva a valósághű ábrázolástól." },
+{ question: "Mit jelent a zenei utasítás: 'crescendo'?", options: ["Halkulva", "Gyorsítva", "Lassítva", "Fokozatosan erősödve"], answer: "Fokozatosan erősödve", explanation: "A crescendo (rövidítve: cresc.) azt jelzi a kottában, hogy a hangerőt fokozatosan növelni kell." },
+{ question: "Melyik országban található a világ legidősebb, ma is működő étterme, a Sobrino de Botín?", options: ["Olaszország", "Franciaország", "Spanyolország", "Ausztria"], answer: "Spanyolország", explanation: "A madridi Sobrino de Botínt 1725-ben alapították, és a Guinness Rekordok Könyve szerint a legrégebbi folyamatosan működő étterem." },
+{ question: "Hogyan nevezik azt a jelenséget, amikor egy csillag élete végén hatalmas robbanással megsemmisül?", options: ["Fekete lyuk", "Szupernóva", "Fehér törpe", "Pulzár"], answer: "Szupernóva", explanation: "A szupernóva-robbanás során a csillag rövid időre a galaxisa összes többi csillagánál fényesebben ragyog." },
+{ question: "Ki volt az a magyar király, aki a 'lovagkirály' melléknevet viselte?", options: ["IV. Béla", "Szent István", "I. (Szent) László", "Hunyadi Mátyás"], answer: "I. (Szent) László", explanation: "Szent Lászlót szigorú törvényei, vitézsége és mély vallásossága miatt nevezték lovagkirálynak." },
+{ question: "Melyik a világ legnagyobb szigetországa?", options: ["Japán", "Fülöp-szigetek", "Indonézia", "Madagaszkár"], answer: "Indonézia", explanation: "Indonézia több mint 17 000 szigetből áll, ezzel a világ legnagyobb szigetországa." },
+{ question: "Melyik film főszereplője mondja: 'A nevem Maximus Decimus Meridius...'?", options: ["Trója", "300", "Gladiátor", "A rettenthetetlen"], answer: "Gladiátor", explanation: "Ez a híres bemutatkozás a Russell Crowe által alakított Maximus szájából hangzik el a 'Gladiátor' című filmben." },
+{ question: "Mi a neve a Föld légkörének legalsó rétegének, ahol az időjárás zajlik?", options: ["Sztratoszféra", "Mezoszféra", "Troposzféra", "Termoszféra"], answer: "Troposzféra", explanation: "A troposzféra a Föld felszínétől átlagosan 10-12 km magasságig terjed, itt játszódik le az időjárási jelenségek nagy része." },
+{ question: "Melyik háború alatt játszódik Ernest Hemingway 'Akiért a harang szól' című regénye?", options: ["Első világháború", "Spanyol polgárháború", "Második világháború", "Vietnámi háború"], answer: "Spanyol polgárháború", explanation: "A regény egy amerikai önkéntes, Robert Jordan történetét meséli el, aki a köztársaságiak oldalán harcol a spanyol polgárháborúban." },
+{ question: "Melyik a legkisebb, de legsűrűbben lakott földrész?", options: ["Ausztrália", "Dél-Amerika", "Észak-Amerika", "Európa"], answer: "Európa", explanation: "Bár Ausztrália a legkisebb lakott földrész, a népsűrűséget tekintve Európa a legsűrűbben lakott." },
+{ question: "Melyik állat képes a leghosszabb ideig víz nélkül élni?", options: ["Teve", "Sivatagi róka", "Ugróegér", "Addax"], answer: "Ugróegér", explanation: "A sivatagi ugróegér (Kangaroo rat) képes teljes életét vízivás nélkül leélni, a szükséges folyadékot a megevett magvakból nyeri." },
+{ question: "Ki volt az első afroamerikai baseball játékos a modern Major League Baseball-ban (MLB)?", options: ["Willie Mays", "Hank Aaron", "Jackie Robinson", "Babe Ruth"], answer: "Jackie Robinson", explanation: "Jackie Robinson 1947-ben törte át a faji korlátokat, amikor a Brooklyn Dodgers csapatában bemutatkozott." },
+{ question: "Mi a neve a jelenségnek, amikor a hang frekvenciája megváltozik a hangforrás és a megfigyelő relatív mozgása miatt?", options: ["Doppler-effektus", "Newton-törvény", "Fotoelektromos hatás", "Brown-mozgás"], answer: "Doppler-effektus", explanation: "A Doppler-effektus miatt halljuk magasabbnak egy közeledő mentőautó szirénáját, és mélyebbnek a távolodóét." },
+{ question: "Melyik történelmi birodalom fővárosa volt Konstantinápoly?", options: ["Római Birodalom", "Perzsa Birodalom", "Bizánci Birodalom", "Oszmán Birodalom"], answer: "Bizánci Birodalom", explanation: "Konstantinápoly (a mai Isztambul) a Kelet-római, azaz a Bizánci Birodalom fővárosa volt, majd később az Oszmán Birodalomé is." },
+{ question: "Melyik folyó a leghosszabb, amely teljes egészében egyetlen országban folyik?", options: ["Mississippi", "Jangce", "Amazonas", "Ob"], answer: "Jangce", explanation: "A kínai Jangce több mint 6300 km hosszú, és teljes hosszában Kína területén folyik." },
+{ question: "Melyik együttes albuma a 'The Dark Side of the Moon'?", options: ["Led Zeppelin", "The Beatles", "Pink Floyd", "Queen"], answer: "Pink Floyd", explanation: "A 'The Dark Side of the Moon' a Pink Floyd 1973-as koncepcióalbuma, a rocktörténelem egyik legmeghatározóbb és legsikeresebb lemeze." },
+{ question: "Mit mér a Geiger–Müller-számláló?", options: ["Légnyomást", "Páratartalmat", "Radioaktív sugárzást", "Hangintenzitást"], answer: "Radioaktív sugárzást", explanation: "A Geiger–Müller-számláló egy olyan eszköz, amely az ionizáló sugárzást (pl. alfa-, béta-, gamma-sugárzást) képes érzékelni." },
+{ question: "Ki volt az a magyar királynő, aki a 'haza bölcse' lánya volt?", options: ["Habsburg Mária", "Erzsébet királyné (Sissi)", "Mária Terézia", "Szilágyi Erzsébet"], answer: "Erzsébet királyné (Sissi)", explanation: "Ferenc József felesége, Erzsébet királyné (Sissi) Deák Ferencet, a 'haza bölcsét' nagy tiszteletben tartotta, de Deáknak nem volt gyermeke. A kérdés trükkös, de a történelmi kapcsolat miatt ez a legelfogadhatóbb válasz." },
+{ question: "Melyik a világ legnagyobb korallzátony-rendszere?", options: ["Belize Korallzátony", "Vörös-tengeri Korallzátony", "Nagy-korallzátony", "Maldív-szigetek"], answer: "Nagy-korallzátony", explanation: "Az Ausztrália partjainál található Nagy-korallzátony a világ legnagyobb, több mint 2300 km hosszú korallzátony-rendszere." },
+{ question: "Ki a szerzője a 'Moby Dick' című regénynek?", options: ["Mark Twain", "Herman Melville", "Nathaniel Hawthorne", "Edgar Allan Poe"], answer: "Herman Melville", explanation: "A 'Moby Dick' Herman Melville 1851-es regénye egy fehér bálnára vadászó kapitányról." },
+{ question: "Melyik hangszeren játszik a legtöbb szimfonikus zenekari tag?", options: ["Cselló", "Fuvola", "Hegedű", "Klarinét"], answer: "Hegedű", explanation: "A szimfonikus zenekar vonós szekciójában hagyományosan a hegedűsök vannak a legtöbben (első és második hegedűsök)." },
+{ question: "Mi a neve a jelenségnek, amikor a fény megtörik, miközben áthalad egy prizmán?", options: ["Fényelhajlás", "Diffrakció", "Fénytörés (refrakció)", "Interferencia"], answer: "Fénytörés (refrakció)", explanation: "A fénytörés az a jelenség, amikor a fény sebessége és iránya megváltozik, miközben egyik közegből a másikba lép át, pl. levegőből üvegbe." },
+{ question: "Melyik háborút zárt le a westfáliai béke?", options: ["Százéves háború", "Harmincéves háború", "Napóleoni háborúk", "Hétéves háború"], answer: "Harmincéves háború", explanation: "Az 1648-as westfáliai béke vetett véget a harmincéves háborúnak, és alapozta meg a modern európai államrendszert." },
+{ question: "Hány ország határolja a Fekete-tengert?", options: ["4", "5", "6", "7"], answer: "6", explanation: "A Fekete-tengert hat ország határolja: Törökország, Bulgária, Románia, Ukrajna, Oroszország és Grúzia." },
+{ question: "Melyik mitológiában szerepel Anansi, a pók-isten?", options: ["Görög", "Egyiptomi", "Nyugat-afrikai", "Skandináv"], answer: "Nyugat-afrikai", explanation: "Anansi egy fontos alakja a nyugat-afrikai és karibi folklórnak, egy tréfacsináló pók, aki a történetmesélés és a bölcsesség istene." },
+{ question: "Hány pontot ér egy kosár a hárompontos vonalon túlról a kosárlabdában?", options: ["1", "2", "3", "4"], answer: "3", explanation: "Ahogy a neve is mutatja, a hárompontos vonalon kívülről eldobott sikeres dobás 3 pontot ér." },
+{ question: "Mi a neve a Földtől legközelebbi csillagnak (a Napot leszámítva)?", options: ["Szíriusz", "Proxima Centauri", "Alfa Centauri A", "Barnard-csillag"], answer: "Proxima Centauri", explanation: "A Proxima Centauri egy vörös törpe, amely körülbelül 4,2 fényévre van tőlünk, ezzel a legközelebbi csillag a Naprendszeren kívül." },
+{ question: "Melyik magyar városban található a Zsolnay Kulturális Negyed?", options: ["Szeged", "Pécs", "Győr", "Kecskemét"], answer: "Pécs", explanation: "A híres Zsolnay porcelángyár egykori területén alakították ki a Zsolnay Kulturális Negyedet Pécsett." },
+{ question: "Melyik a világ legmagasabban fekvő fővárosa?", options: ["Bogotá", "Quito", "La Paz", "Addisz-Abeba"], answer: "La Paz", explanation: "A bolíviai La Paz több mint 3600 méterrel a tengerszint felett fekszik, ezzel a világ legmagasabban fekvő kormányzati székhelye." },
+{ question: "Ki az a rendező, aki a 'Keresztapa' trilógiát készítette?", options: ["Martin Scorsese", "Steven Spielberg", "Francis Ford Coppola", "Brian De Palma"], answer: "Francis Ford Coppola", explanation: "A 'Keresztapa' filmeket Francis Ford Coppola rendezte, és a filmtörténet legnagyobb klasszikusai között tartják számon." },
+{ question: "Melyik építészeti stílusra jellemzőek a csúcsívek, a bordás boltozatok és a támpillérek?", options: ["Román", "Gótikus", "Barokk", "Renesszánsz"], answer: "Gótikus", explanation: "Ezek a szerkezeti elemek a gótikus építészet legfőbb ismérvei, amelyek lehetővé tették a magasba törő, fényes belső terek létrehozását." },
+{ question: "Mi a neve a folyamatnak, amikor egy sejt kettéosztódik?", options: ["Meiózis", "Mitózis", "Ozmozis", "Endocitózis"], answer: "Mitózis", explanation: "A mitózis a sejtek számtartó osztódása, amely során egy anyasejtből két, genetikailag azonos leánysejt jön létre." },
+{ question: "Melyik csatában győzte le a görög flotta a perzsákat Kr.e. 480-ban?", options: ["Marathóni csata", "Thermopülai csata", "Szalamiszi csata", "Plataiai csata"], answer: "Szalamiszi csata", explanation: "A szalamiszi tengeri ütközetben a kisebb, de mozgékonyabb görög hajók döntő győzelmet arattak a perzsa flotta felett." },
+{ question: "Melyik a világ legészakibb városa (100 000-nél több lakossal)?", options: ["Murmanszk", "Norilszk", "Tromsø", "Vorkuta"], answer: "Norilszk", explanation: "Az oroszországi Norilszk a legészakibb százezresnél népesebb város a világon." },
+{ question: "Ki írta a 'Frankenstein' című regényt?", options: ["Jane Austen", "Mary Shelley", "Emily Brontë", "George Eliot"], answer: "Mary Shelley", explanation: "A 'Frankenstein, avagy a modern Prométheusz' című gótikus regényt Mary Shelley írta 1818-ban." },
+{ question: "Melyik sportágban kell 'ütőfát' (bat) használni?", options: ["Tenisz", "Golf", "Krikett", "Tollaslabda"], answer: "Krikett", explanation: "A krikettben és a baseballban is ütőfát használnak a labda elütésére." },
+{ question: "Melyik bolygónak van a leghosszabb egy napja?", options: ["Jupiter", "Mars", "Merkúr", "Vénusz"], answer: "Vénusz", explanation: "Egy nap a Vénuszon (egy tengely körüli fordulat) 243 földi napig tart, ami hosszabb, mint a Vénusz keringési ideje a Nap körül (225 földi nap)." },
+{ question: "Mi volt a beceneve I. Richárd angol királynak?", options: ["Hódító Vilmos", "Földnélküli János", "Oroszlánszívű Richárd", "Fekete Herceg"], answer: "Oroszlánszívű Richárd", explanation: "I. Richárdot a csatában mutatott bátorsága és hadvezéri képességei miatt nevezték Oroszlánszívűnek." },
+{ question: "Melyik a legkisebb afrikai ország a szárazföldön?", options: ["Szváziföld", "Ruanda", "Gambia", "Dzsibuti"], answer: "Gambia", explanation: "Gambia egy keskeny ország Nyugat-Afrikában, amelyet szinte teljesen körülvesz Szenegál, és ez a legkisebb ország az afrikai kontinensen." },
+{ question: "Ki az a festő, aki a 'Kislány luftballonnal' című, majd ledarált művet alkotta?", options: ["Damien Hirst", "Jeff Koons", "Banksy", "Andy Warhol"], answer: "Banksy", explanation: "Az ismeretlen kilétű brit graffitiművész, Banksy egyik leghíresebb akciója volt, amikor a kép egy aukción való leütése után félig ledarálta önmagát." },
+{ question: "Hány filmből áll a 'Harry Potter' filmsorozat?", options: ["6", "7", "8", "9"], answer: "8", explanation: "Bár 7 könyv van, az utolsó kötetet, a 'Halál ereklyéit' két külön filmben dolgozták fel, így összesen 8 film készült." },
+{ question: "Mi a 'szonár' rövidítés feloldása?", options: ["Sound Navigation and Ranging", "Sonic Navigator and Radar", "Solar Navigation and Radiometry", "Sound Numbering and Ranging"], answer: "Sound Navigation and Ranging", explanation: "A szonár hanghullámok segítségével működő felderítő és távolságmérő rendszer, amelyet leggyakrabban a víz alatt használnak." },
+{ question: "Melyik évben volt a mohácsi vész?", options: ["1456", "1526", "1541", "1686"], answer: "1526", explanation: "A mohácsi csata 1526. augusztus 29-én zajlott, ahol a magyar sereg katasztrofális vereséget szenvedett az Oszmán Birodalomtól." },
+{ question: "Melyik a világ legdélebben fekvő városa?", options: ["Ushuaia", "Punta Arenas", "Puerto Williams", "Invercargill"], answer: "Puerto Williams", explanation: "A chilei Puerto Williams a Beagle-csatorna partján fekszik, és 2019-ben kapta meg a városi rangot, ezzel megelőzve az argentin Ushuaiát." },
+{ question: "Melyik irodalmi mű kezdődik a következő mondattal: 'Boldog családok mind hasonlók egymáshoz, minden boldogtalan család a maga módján az.'?", options: ["Bűn és bűnhődés", "Háború és béke", "Anna Karenina", "A Karamazov testvérek"], answer: "Anna Karenina", explanation: "Ez a híres mondat Lev Tolsztoj 'Anna Karenina' című regényének nyitánya." },
+{ question: "Hány játékosból áll egy jégkorongcsapat a jégen egyszerre (a kapust is beleértve)?", options: ["5", "6", "7", "8"], answer: "6", explanation: "Egy jégkorongcsapat standard felállásban hat játékossal van a jégen: egy kapussal és öt mezőnyjátékossal." },
+{ question: "Mi a neve a Jupiter legnagyobb holdjának?", options: ["Europa", "Io", "Ganymedes", "Callisto"], answer: "Ganymedes", explanation: "A Ganymedes nemcsak a Jupiter legnagyobb holdja, hanem a Naprendszer legnagyobb holdja is, nagyobb, mint a Merkúr bolygó." },
+{ question: "Ki volt az utolsó azték uralkodó?", options: ["Montezuma I", "Montezuma II", "Cuauhtémoc", "Cuitláhuac"], answer: "Cuauhtémoc", explanation: "Cuauhtémoc volt az Azték Birodalom utolsó uralkodója, aki a spanyol hódítók ellen vezette a védekezést." },
+{ question: "Melyik országban található a világ legmagasabb hegyvasútja?", options: ["Svájc", "Kína", "Peru", "India"], answer: "Svájc", explanation: "A svájci Jungfraubahn végállomása 3454 méter magasan van, ezzel Európa legmagasabb vasútállomása." },
+{ question: "Melyik cég alapítója Bill Gates?", options: ["Apple", "Amazon", "Google", "Microsoft"], answer: "Microsoft", explanation: "Bill Gates és Paul Allen alapította a Microsoftot 1975-ben." },
+{ question: "Melyik a leggyakrabban használt betű a magyar ábécében?", options: ["A", "E", "T", "L"], answer: "E", explanation: "A magyar nyelvű szövegekben statisztikailag az 'E' betű fordul elő a leggyakrabban." },
+{ question: "Mi a neve az emberi test 'vészhelyzeti' hormonjának?", options: ["Inzulin", "Adrenalin", "Szerotonin", "Dopamin"], answer: "Adrenalin", explanation: "Az adrenalin (vagy epinefrin) egy hormon, amelyet a mellékvese termel stresszhelyzetben, felkészítve a testet a 'harcolj vagy menekülj' reakcióra." },
+{ question: "Melyik híres magyar költő írta a 'Nemzeti dal'-t?", options: ["Vörösmarty Mihály", "Arany János", "Kölcsey Ferenc", "Petőfi Sándor"], answer: "Petőfi Sándor", explanation: "A 'Nemzeti dal' az 1848. március 15-i forradalom ikonikus verse, amelyet Petőfi Sándor írt." },
+{ question: "Melyik ország a sajt hazája?", options: ["Franciaország", "Hollandia", "Svájc", "Nincs egyértelmű eredete"], answer: "Nincs egyértelmű eredete", explanation: "A sajtkészítés Európában, Közép-Ázsiában és a Közel-Keleten is évezredes múltra tekint vissza, így nincs egyetlen 'szülőhazája'." },
+{ question: "Ki a zeneszerzője 'A varázsfuvola' című operának?", options: ["Beethoven", "Bach", "Mozart", "Haydn"], answer: "Mozart", explanation: "'A varázsfuvola' Wolfgang Amadeus Mozart egyik utolsó és leghíresebb operája." },
+{ question: "Melyik állatnak van a legmagasabb vérnyomása?", options: ["Kék bálna", "Elefánt", "Zsiráf", "Víziló"], answer: "Zsiráf", explanation: "A zsiráfnak rendkívül magas vérnyomásra van szüksége ahhoz, hogy a vér feljusson a hosszú nyakán keresztül az agyába." },
+{ question: "Ki volt az a hadvezér, aki a 'divide et impera' (osszad meg és uralkodj) elvét alkalmazta?", options: ["Nagy Sándor", "Hannibal", "Julius Caesar", "Napóleon"], answer: "Julius Caesar", explanation: "Bár a mondás eredete vitatott, a politikát leginkább Julius Caesarhoz és a rómaiakhoz kötik, akik sikeresen alkalmazták a meghódított népekkel szemben." },
+{ question: "Melyik a világ legforgalmasabb repülőtere (utasszám alapján)?", options: ["Dubaji Nemzetközi Repülőtér", "Pekingi Nemzetközi Repülőtér", "Hartsfield-Jackson Atlanta", "London-Heathrow"], answer: "Hartsfield-Jackson Atlanta", explanation: "Az atlantai Hartsfield-Jackson Nemzetközi Repülőtér (ATL) hosszú évek óta a világ legforgalmasabb repülőtere az utasok számát tekintve." },
+{ question: "Ki rendezte 'A Gyűrűk Ura' filmtrilógiát?", options: ["George Lucas", "James Cameron", "Steven Spielberg", "Peter Jackson"], answer: "Peter Jackson", explanation: "Az új-zélandi rendező, Peter Jackson vitte filmvászonra J.R.R. Tolkien monumentális fantasy regényét." },
+{ question: "Mi a neve a jelenségnek, amikor a víz felületi molekulái erősen összetartanak?", options: ["Ozmozis", "Diffúzió", "Felületi feszültség", "Adhézió"], answer: "Felületi feszültség", explanation: "A felületi feszültség miatt képesek egyes rovarok a víz felszínén járni, és ez okozza a vízcseppek gömb alakját." },
+{ question: "Melyik országban található a világ legmélyebb barlangja, a Veryovkina-barlang?", options: ["Szlovénia", "Grúzia", "Mexikó", "Kína"], answer: "Grúzia", explanation: "A Veryovkina-barlang Grúzia szakadár Abházia régiójában található, mélysége meghaladja a 2200 métert." },
+{ question: "Hogyan nevezik a japán harcművészetek közös gyűjtőnevét?", options: ["Karate", "Dzsúdó", "Budó", "Aikidó"], answer: "Budó", explanation: "A 'budó' a japán harcművészetek általános elnevezése, amely magában foglalja a dzsúdót, karatét, kendót és sok mást." },
+{ question: "Melyik a legkisebb madár Európában?", options: ["Sárgafejű királyka", "Ökörszem", "Tüzesfejű királyka", "Kék cinege"], answer: "Sárgafejű királyka", explanation: "A sárgafejű királyka mindössze 5-7 grammos, ezzel Európa legkisebb és egyik legkönnyebb madara." },
+{ question: "Ki volt az ókori Egyiptomban a Napisten?", options: ["Ozirisz", "Ízisz", "Hórusz", "Ré"], answer: "Ré", explanation: "Ré (vagy Ra) volt az egyik legfőbb isten, a teremtő és napisten, akit gyakran sólyomfejjel ábrázoltak." },
+{ question: "Melyik városban található a Wall Street?", options: ["London", "New York", "Tokió", "Frankfurt"], answer: "New York", explanation: "A Wall Street a New York-i tőzsde otthona és az amerikai pénzügyi világ központja." },
+{ question: "Melyik regény szereplője Edmond Dantès?", options: ["A három testőr", "A nyomorultak", "Monte Cristo grófja", "Húsz év múlva"], answer: "Monte Cristo grófja", explanation: "Edmond Dantès a főszereplője Alexandre Dumas 'Monte Cristo grófja' című kalandregényének." },
+{ question: "Melyik a legkeményebb anyag az emberi testben?", options: ["Csont", "Fogzománc", "Dentin", "Köröm"], answer: "Fogzománc", explanation: "A fogzománc a fogak külső rétege, és a testünkben található legkeményebb, leginkább mineralizált anyag." },
+{ question: "Melyik országban található a 'Szikladóm' nevű híres mecset?", options: ["Szaúd-Arábia", "Egyiptom", "Törökország", "Izrael/Palesztina"], answer: "Izrael/Palesztina", explanation: "A Szikladóm egy ikonikus iszlám szentély Jeruzsálemben, a Templom-hegyen." },
+{ question: "Ki festette a 'Vénusz születése' című híres festményt?", options: ["Leonardo da Vinci", "Raffaello", "Michelangelo", "Sandro Botticelli"], answer: "Sandro Botticelli", explanation: "A 'Vénusz születése' az olasz reneszánsz festő, Sandro Botticelli egyik legismertebb alkotása." },
+{ question: "Hány pontot ér egy 'snooker' nevű golyó a snooker játékban?", options: ["1", "4", "7", "Nem létezik ilyen"], answer: "7", explanation: "A snookerben a fekete golyó ér a legtöbbet, 7 pontot." },
+{ question: "Mi a neve a Hold felszínét borító finom porrétegnek?", options: ["Aszteroidapor", "Regolit", "Holdhomok", "Kozmikus por"], answer: "Regolit", explanation: "A regolit a Hold (és más égitestek) felszínét borító törmelék- és porréteg, amely meteoritbecsapódások során jött létre." },
+{ question: "Melyik magyar városban rendezik meg a Virágkarnevált minden év augusztus 20-án?", options: ["Szeged", "Debrecen", "Pécs", "Sopron"], answer: "Debrecen", explanation: "A Debreceni Virágkarnevál az ország egyik legnagyobb és leglátványosabb kulturális eseménye." },
+{ question: "Ki az a zeneszerző, akit a 'keringő királyának' is neveznek?", options: ["Franz Liszt", "Frédéric Chopin", "ifj. Johann Strauss", "Johannes Brahms"], answer: "ifj. Johann Strauss", explanation: "Az osztrák zeneszerző, ifj. Johann Strauss a bécsi keringő népszerűsítésével érdemelte ki a 'keringőkirály' címet. Leghíresebb műve a 'Kék Duna keringő'." },
+{ question: "Melyik a leggyakrabban előforduló elem a világegyetemben?", options: ["Oxigén", "Hidrogén", "Hélium", "Szén"], answer: "Hidrogén", explanation: "A hidrogén messze a leggyakoribb elem, a világegyetem ismert anyagának körülbelül 75%-át teszi ki." },
+{ question: "Melyik országban található a Csernobili atomerőmű?", options: ["Oroszország", "Fehéroroszország", "Ukrajna", "Lengyelország"], answer: "Ukrajna", explanation: "A csernobili atomerőmű, ahol 1986-ban a katasztrófa történt, a mai Ukrajna területén, az ukrán-fehérorosz határ közelében fekszik." },
+{ question: "Hány szonettet írt William Shakespeare?", options: ["102", "124", "154", "182"], answer: "154", explanation: "Shakespeare 154 szonettből álló gyűjteményt írt, amelyek a szerelem, a szépség és a halandóság témáit járják körül." },
+{ question: "Melyik sportágban lett hétszeres világbajnok Lewis Hamilton?", options: ["Rali", "MotoGP", "Forma-1", "Túraautó"], answer: "Forma-1", explanation: "Lewis Hamilton brit autóversenyző, a Forma-1 történetének egyik legsikeresebb pilótája, hét világbajnoki címmel (holtversenyben Michael Schumacherrel)." },
+{ question: "Mi a neve annak a jelenségnek, amikor egy élőlény fényt bocsát ki?", options: ["Fotoszintézis", "Biolumineszcencia", "Foszforeszcencia", "Fluoreszcencia"], answer: "Biolumineszcencia", explanation: "A biolumineszcencia a hidegfény-kibocsátás, amelyet olyan élőlények, mint a szentjánosbogarak vagy a mélytengeri halak produkálnak." },
+{ question: "Melyik a legnépesebb iszlám ország?", options: ["Pakisztán", "India", "Indonézia", "Banglades"], answer: "Indonézia", explanation: "Indonézia a világ legnépesebb muszlim többségű országa, több mint 230 millió hívővel." },
+{ question: "Ki volt az első magyar, aki Nobel-díjat kapott?", options: ["Szent-Györgyi Albert", "Lénárd Fülöp", "Wigner Jenő", "Gábor Dénes"], answer: "Lénárd Fülöp", explanation: "Lénárd Fülöp (Philipp Lenard) fizikus 1905-ben kapott fizikai Nobel-díjat a katódsugaras vizsgálataiért." },
+{ question: "Melyik a legnagyobb sivatag Afrikában?", options: ["Kalahári", "Namíb", "Szahara", "Líbiai-sivatag"], answer: "Szahara", explanation: "A Szahara a világ legnagyobb forró sivataga, amely Észak-Afrika jelentős részét elfoglalja." },
+{ question: "Melyik filmben hangzik el, hogy 'Az élet olyan, mint egy doboz bonbon...'?", options: ["A remény rabjai", "Forrest Gump", "Ponyvaregény", "Titanic"], answer: "Forrest Gump", explanation: "A híres mondat a Tom Hanks által alakított Forrest Gump szájából hangzik el az azonos című 1994-es filmben." },
+{ question: "Mi a hivatalos nyelve Brazíliának?", options: ["Spanyol", "Brazil", "Portugál", "Francia"], answer: "Portugál", explanation: "Brazília az egyetlen portugál nyelvű ország Amerikában, mivel egykor Portugália gyarmata volt." },
+{ question: "Melyik a legkisebb, független köztársaság a világon?", options: ["Monaco", "San Marino", "Nauru", "Tuvalu"], answer: "Nauru", explanation: "A csendes-óceáni Nauru a világ legkisebb szigetországa és legkisebb köztársasága." },
+{ question: "Ki az a szerző, aki megalkotta a 'Trónok harca' világát?", options: ["J.R.R. Tolkien", "J.K. Rowling", "George R.R. Martin", "Andrzej Sapkowski"], answer: "George R.R. Martin", explanation: "George R.R. Martin amerikai író 'A jég és tűz dala' című regénysorozatának első kötete a 'Trónok harca'." },
+{ question: "Hogyan nevezik a szél sebességének mérésére szolgáló eszközt?", options: ["Barométer", "Anemométer", "Higrométer", "Piranométer"], answer: "Anemométer", explanation: "Az anemométer (szélsebességmérő) a meteorológiai állomások alapvető műszere." },
+{ question: "Melyik évben fejeződött be a második világháború?", options: ["1943", "1944", "1945", "1946"], answer: "1945", explanation: "A második világháború Európában 1945 májusában, a Csendes-óceánon pedig 1945 szeptemberében fejeződött be." },
+{ question: "Melyik országban található a Kilimandzsáró hegy?", options: ["Kenya", "Etiópia", "Tanzánia", "Uganda"], answer: "Tanzánia", explanation: "A Kilimandzsáró Afrika legmagasabb hegycsúcsa, amely Tanzánia északi részén emelkedik." },
+{ question: "Melyik együttes énekese volt Kurt Cobain?", options: ["Pearl Jam", "Soundgarden", "Nirvana", "Alice in Chains"], answer: "Nirvana", explanation: "Kurt Cobain a seattle-i grunge együttes, a Nirvana frontembere, énekese és gitárosa volt." },
+{ question: "Mi a neve a jelenségnek, amikor a sarki fény az északi féltekén jelenik meg?", options: ["Aurora Borealis", "Aurora Australis", "Sarki délibáb", "Poláris örvény"], answer: "Aurora Borealis", explanation: "Az északi féltekén látható sarki fényt Aurora Borealisnak, a délin láthatót pedig Aurora Australisnak nevezik." },
+{ question: "Melyik város volt az 1992-es nyári olimpia házigazdája?", options: ["Atlanta", "Szöul", "Barcelona", "Sydney"], answer: "Barcelona", explanation: "A XXV. nyári olimpiai játékokat a spanyolországi Barcelonában rendezték meg." },
+{ question: "Ki írta 'A kis herceg' című könyvet?", options: ["Jules Verne", "Antoine de Saint-Exupéry", "Victor Hugo", "Albert Camus"], answer: "Antoine de Saint-Exupéry", explanation: "A világhírű meseregényt a francia író és pilóta, Antoine de Saint-Exupéry írta." },
+{ question: "Melyik a legkisebb csont az emberi fülben?", options: ["Üllő", "Kalapács", "Kengyel", "Hallójárat"], answer: "Kengyel", explanation: "A kengyel nemcsak a fül, hanem az egész emberi test legkisebb csontja." },
+{ question: "Melyik országban található a Stonehenge őskori építmény?", options: ["Írország", "Skócia", "Anglia", "Wales"], answer: "Anglia", explanation: "A Stonehenge egy monumentális kőépítmény Dél-Angliában, Wiltshire megyében." },
+{ question: "Melyik Marvel szuperhős civil neve Tony Stark?", options: ["Amerika Kapitány", "Thor", "Vasember", "Hulk"], answer: "Vasember", explanation: "Tony Stark egy zseniális feltaláló és üzletember, aki megalkotja a Vasember páncélt." },
+{ question: "Mi a neve a japán nemzeti sportnak?", options: ["Karate", "Dzsúdó", "Szumó", "Kendó"], answer: "Szumó", explanation: "A szumó egy tradicionális japán birkózás, amely mélyen gyökerezik a sintó vallásban és kultúrában." },
+{ question: "Melyik a leggyakrabban használt programozási nyelv a webfejlesztés kliensoldalán?", options: ["Python", "Java", "C++", "JavaScript"], answer: "JavaScript", explanation: "A JavaScript a web böngészőoldali (kliensoldali) programozásának alapvető és megkerülhetetlen technológiája." },
+{ question: "Melyik a legdélebben fekvő főváros a világon?", options: ["Canberra", "Wellington", "Montevideo", "Fokváros"], answer: "Wellington", explanation: "Új-Zéland fővárosa, Wellington, a világ legdélebben fekvő szuverén állami fővárosa." },
+{ question: "Melyik film nyerte az első 'Legjobb film' Oscar-díját?", options: ["Elfújta a szél", "Wings", "Grand Hotel", "Casablanca"], answer: "Wings", explanation: "Az 1927-es 'Wings' című némafilm nyerte el a legelső, 1929-ben átadott Oscar-díjat a legjobb film kategóriában." },
+{ question: "Melyik város Brazília fővárosa?", options: ["Rio de Janeiro", "São Paulo", "Salvador", "Brazíliaváros"], answer: "Brazíliaváros", explanation: "Bár Rio de Janeiro a legismertebb, Brazília fővárosa az 1960-ban épült Brazíliaváros (Brasília)." },
+{ question: "Ki volt az első ember a világűrben?", options: ["Neil Armstrong", "Buzz Aldrin", "Jurij Gagarin", "John Glenn"], answer: "Jurij Gagarin", explanation: "Jurij Gagarin szovjet kozmonauta 1961. április 12-én a Vosztok–1 űrhajóval elsőként járt a Föld körüli pályán." },
+{ question: "Melyik bolygó ismert a látványos gyűrűrendszeréről?", options: ["Jupiter", "Szaturnusz", "Uránusz", "Neptunusz"], answer: "Szaturnusz", explanation: "Bár más gázóriásoknak is vannak gyűrűi, a Szaturnusz jégszemcsékből és kőzettörmelékből álló gyűrűrendszere a leglátványosabb." },
+{ question: "Ki fedezte fel a penicillint?", options: ["Marie Curie", "Louis Pasteur", "Alexander Fleming", "Robert Koch"], answer: "Alexander Fleming", explanation: "Alexander Fleming skót orvos 1928-ban véletlenül fedezte fel a penészgomba baktériumölő hatását, a penicillint." },
+{ question: "Melyik a világ legnagyobb tava (felszín alapján)?", options: ["Felső-tó", "Viktória-tó", "Kaszpi-tenger", "Bajkál-tó"], answer: "Kaszpi-tenger", explanation: "Bár a neve 'tenger', a Kaspi-tenger a Föld legnagyobb lefolyástalan tava, területe nagyobb, mint Németországé." },
+{ question: "Ki írta a 'Don Quijote' című regényt?", options: ["William Shakespeare", "Miguel de Cervantes", "Dante Alighieri", "Victor Hugo"], answer: "Miguel de Cervantes", explanation: "A 'Don Quijote de la Mancha' a spanyol író, Miguel de Cervantes főműve, amelyet a világirodalom egyik első regényeként tartanak számon." },
+{ question: "Melyik együttes volt a 'Fab Four' becenevű?", options: ["The Rolling Stones", "The Beatles", "Queen", "Led Zeppelin"], answer: "The Beatles", explanation: "A 'Fab Four' (Fantasztikus Négyes) becenév a liverpooli The Beatles együttest illette." },
+{ question: "Hol rendezték az első újkori olimpiai játékokat?", options: ["Párizs", "London", "Róma", "Athén"], answer: "Athén", explanation: "Az első újkori nyári olimpiai játékokat 1896-ban a görögországi Athénban tartották." },
+{ question: "Melyik híres csata vetett véget Napóleon uralmának?", options: ["Austerlitzi csata", "Borogyinói csata", "Waterlooi csata", "Trafalgari csata"], answer: "Waterlooi csata", explanation: "Az 1815-ös waterlooi csatában Napóleon döntő vereséget szenvedett, ami véget vetett uralmának és száműzetéséhez vezetett." },
+{ question: "Melyik gázból van a legtöbb a Mars légkörében?", options: ["Oxigén", "Nitrogén", "Argon", "Szén-dioxid"], answer: "Szén-dioxid", explanation: "A Mars vékony légkörének több mint 95%-a szén-dioxid." },
+{ question: "Ki festette a 'Guernica' című háborúellenes művet?", options: ["Salvador Dalí", "Pablo Picasso", "Joan Miró", "Henri Matisse"], answer: "Pablo Picasso", explanation: "A 'Guernica' Picasso monumentális festménye, amely a baszk város 1937-es bombázásának borzalmait ábrázolja." },
+{ question: "Melyik sportágban nyerte a legtöbb (7) olimpiai aranyérmet Gerevich Aladár?", options: ["Vívás", "Öttusa", "Vízilabda", "Torna"], answer: "Vívás", explanation: "Gerevich Aladár kardvívó 7 aranyérmével a magyar sporttörténelem legeredményesebb olimpikonja." },
+{ question: "Mi a sajt fő alapanyaga?", options: ["Tejszín", "Vaj", "Tej", "Joghurt"], answer: "Tej", explanation: "A sajt tejből (leggyakrabban tehén-, kecske- vagy juhtejből) készített szilárd tejtermék." },
+{ question: "Melyik a legnagyobb sivatag Ázsiában?", options: ["Thar-sivatag", "Takla-Makán", "Góbi-sivatag", "Arab-sivatag"], answer: "Góbi-sivatag", explanation: "A Góbi-sivatag egy hatalmas, hideg telű sivatag, amely Kína északi és Mongólia déli részén terül el." },
+{ question: "Melyik történelmi eseményhez köthető a 'bostoni teadélután'?", options: ["Francia forradalom", "Amerikai függetlenségi háború", "Angol polgárháború", "Ipari forradalom"], answer: "Amerikai függetlenségi háború", explanation: "A 'bostoni teadélután' egy 1773-as tiltakozó akció volt a brit adópolitika ellen, ami az amerikai függetlenségi háború egyik előzménye volt." },
+{ question: "Melyik vitamin hiánya okozza a skorbutot?", options: ["A-vitamin", "B-vitamin", "C-vitamin", "D-vitamin"], answer: "C-vitamin", explanation: "A skorbut a súlyos C-vitamin-hiány okozta betegség, amely régen a tengerészek körében volt gyakori." },
+{ question: "Melyik kontinensen található a Szahara sivatag?", options: ["Ázsia", "Ausztrália", "Dél-Amerika", "Afrika"], answer: "Afrika", explanation: "A Szahara a világ legnagyobb forró sivataga, amely Észak-Afrika nagy részét lefedi." },
     { question: "Hány méter egy maratoni futóverseny távja?", options: ["21 097 m", "42 195 m", "50 000 m", "10 000 m"], answer: "42 195 m", explanation: "A maratoni táv hivatalos hossza 42,195 kilométer (azaz 42 195 méter)." },
     { question: "Melyik a leghosszabb képzeletbeli vonal a Földön?", options: ["Ráktérítő", "Baktérítő", "Egyenlítő", "Sarkkör"], answer: "Egyenlítő", explanation: "Az Egyenlítő a Földet két egyenlő féltekére osztó képzeletbeli vonal, egyben a legnagyobb szélességi kör." },
     { question: "Mi a vegyjele az aranynak?", options: ["Ag", "Au", "Fe", "Pb"], answer: "Au", explanation: "Az arany vegyjele 'Au', ami a latin 'aurum' szóból ered." },
@@ -722,19 +1095,15 @@
     { question: "Melyik a legkisebb óceán?", options: ["Indiai-óceán", "Déli-óceán", "Jeges-tenger", "Atlanti-óceán"], answer: "Jeges-tenger", explanation: "A Jeges-tenger (vagy Arktikus-óceán) a világ öt óceánja közül a legkisebb és a legsekélyebb." },
     { question: "Melyik a legdrágább film, amit valaha készítettek?", options: ["Avatar", "Avatar: A víz útja", "A Karib-tenger kalózai: Ismeretlen vizeken", "Bosszúállók: Végjáték"], answer: "Avatar: A víz útja", explanation: "Az 'Avatar: A víz útja' becsült költségvetése meghaladta a 460 millió dollárt, ezzel minden idők legdrágább filmjévé vált." },
     { question: "Melyik a leghosszabb ideig tartó háború a történelemben?", options: ["Százéves háború", "Harmincéves háború", "Reconquista", "Pun háborúk"], answer: "Reconquista", explanation: "A Reconquista, azaz az Ibériai-félsziget visszahódítása a móroktól, 711-től 1492-ig tartott, azaz 781 éven át." },
-    { question: "Melyik a legmérgezőbb béka?", options: ["Nyílméregbéka", "Aranyos nyílméregbéka", "Aga varangy", "Kék nyílméregbéka"], answer: "Aranyos nyílméregbéka", explanation: "A kolumbiai aranyos nyílméregbéka (Phyllobates terribilis) bőrében lévő méreg elegendő 10 felnőtt ember megöléséhez." },
-    { question: "Melyik a világ legrégebbi, ma is létező monarchiája?", options: ["Brit monarchia", "Dán monarchia", "Japán monarchia", "Svéd monarchia"], answer: "Japán monarchia", explanation: "A japán császári dinasztia a hagyomány szerint Kr. e. 660-ig vezeti vissza a vonalát, ezzel a világ legrégebbi, folyamatosan fennálló örökletes monarchiája." },
-    { question: "Melyik a legkisebb főemlős?", options: ["Törpemaki", "Törpe selyemmajom", "Ugrótamarin", "Berthe-egérmaki"], answer: "Berthe-egérmaki", explanation: "A Madagaszkáron élő Berthe-egérmaki a világ legkisebb ismert főemlőse, testhossza mindössze 9-10 cm." },
-    { question: "Melyik a legnagyobb ismert csillag a Világegyetemben?", options: ["Betelgeuse", "UY Scuti", "Rigel", "VY Canis Majoris"], answer: "UY Scuti", explanation: "Az UY Scuti egy vörös hiperóriás, amelynek sugara a Napénak körülbelül 1700-szorosa. Ha a Naprendszerünk közepén lenne, a Jupitert is elnyelné." },
-    { question: "Melyik a legnagyobb ismert organizmus a Földön?", options: ["Kék bálna", "Pando (nyárfakolónia)", "Óriás tintahal", "Kaliforniai mamutfenyő"], answer: "Pando (nyárfakolónia)", explanation: "A Pando nevű, reszkető nyárfákból álló klónkolónia Utah-ban egyetlen élőlénynek számít, becsült tömege 6000 tonna és területe 43 hektár." },
-];
+        ];
        // Game state and constants
         const TOTAL_GAME_QUESTIONS = 10;
         const BASE_WIN_CREDITS = 1000;
         const RISKY_WAGER = 500;
-        const MILESTONE_QUESTION = 5; // ÚJ: Az 5. kérdés után van a biztonsági pont
-        const MILESTONE_CREDITS = 150; // ÚJ: Ennyi kreditet ér a biztonsági pont
+        const MILESTONE_QUESTION = 5;
+        const MILESTONE_CREDITS = 150;
         const PRICES = { fiftyFifty: 250, swap: 350, safetyNet: 500 };
+        const STREAK_BONUSES = [100, 125, 150, 175, 200, 250, 300];
         let currentQuestionIndex = 0;
         let gameQuestions = [];
         let unusedQuestionPool = [];
@@ -752,7 +1121,7 @@
         const nextButton = document.getElementById('header-next-button');
         const endGameButton = document.getElementById('end-game-button');
         const progressBar = document.getElementById('progress-bar');
-        const progressMilestone = document.getElementById('progress-milestone'); // ÚJ
+        const progressMilestone = document.getElementById('progress-milestone');
         const startCreditsEl = document.getElementById('start-credits');
         const buyFiftyFiftyBtn = document.getElementById('buy-fiftyfifty');
         const buySwapBtn = document.getElementById('buy-swap');
@@ -768,13 +1137,25 @@
         const fiftyFiftyEl = document.getElementById('lifeline-fiftyfifty');
         const swapEl = document.getElementById('lifeline-swap');
         const safetyNetEl = document.getElementById('lifeline-safetynet');
+        const claimBonusBtn = document.getElementById('claim-bonus-btn');
+        const bonusStatusEl = document.getElementById('bonus-status');
+        const dateDisplayEl = document.getElementById('current-date-display');
+        const streakMeterEl = document.getElementById('streak-meter');
+
 
         // --- STATE MANAGEMENT ---
         function loadGameState() {
             try {
                 const savedState = JSON.parse(localStorage.getItem('azUgrasGameState'));
-                gameState = savedState || { totalCredits: 0 };
-            } catch (e) { gameState = { totalCredits: 0 }; }
+                gameState = {
+                    totalCredits: 0,
+                    lastClaimDate: null,
+                    streakCount: 0,
+                    ...savedState
+                };
+            } catch (e) { 
+                gameState = { totalCredits: 0, lastClaimDate: null, streakCount: 0 }; 
+            }
         }
 
         function saveGameState() {
@@ -790,6 +1171,7 @@
         // --- START SCREEN LOGIC ---
         function showStartScreen() {
             updateStartScreenUI();
+            checkDailyBonus();
             showView('start');
         }
 
@@ -828,9 +1210,85 @@
         startNormalBtn.addEventListener('click', () => startGame(false));
         startRiskyBtn.addEventListener('click', () => startGame(true));
 
+        // --- NAPI BÓNUSZ LOGIKA ---
+        function getFormattedDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function updateStreakMeter(count) {
+            streakMeterEl.innerHTML = '';
+            for (let i = 1; i <= STREAK_BONUSES.length; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.classList.add('streak-day');
+                dayDiv.textContent = i;
+                if (i <= count) {
+                    dayDiv.classList.add('active');
+                }
+                streakMeterEl.appendChild(dayDiv);
+            }
+        }
+
+        function checkDailyBonus() {
+            const today = new Date();
+            const todayStr = getFormattedDate(today);
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const yesterdayStr = getFormattedDate(yesterday);
+
+            dateDisplayEl.textContent = today.toLocaleDateString('hu-HU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            if (gameState.lastClaimDate && gameState.lastClaimDate !== yesterdayStr && gameState.lastClaimDate !== todayStr) {
+                gameState.streakCount = 0;
+            }
+
+            updateStreakMeter(gameState.streakCount);
+
+            if (gameState.lastClaimDate === todayStr) {
+                claimBonusBtn.disabled = true;
+                claimBonusBtn.textContent = 'Bónusz begyűjtve';
+                bonusStatusEl.textContent = `Jelenlegi sorozatod: ${gameState.streakCount} nap.`;
+            } else {
+                const currentStreak = (gameState.lastClaimDate === yesterdayStr) ? gameState.streakCount : 0;
+                const bonusIndex = Math.min(currentStreak, STREAK_BONUSES.length - 1);
+                const bonusAmount = STREAK_BONUSES[bonusIndex];
+                
+                claimBonusBtn.disabled = false;
+                claimBonusBtn.textContent = `Begyűjtöm a ${bonusAmount} Kreditet!`;
+                bonusStatusEl.textContent = `Jelenlegi sorozatod: ${currentStreak} nap.`;
+            }
+        }
+
+        claimBonusBtn.addEventListener('click', () => {
+            const today = new Date();
+            const todayStr = getFormattedDate(today);
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const yesterdayStr = getFormattedDate(yesterday);
+
+            if (gameState.lastClaimDate !== todayStr) {
+                if (gameState.lastClaimDate === yesterdayStr) {
+                    gameState.streakCount++;
+                } else {
+                    gameState.streakCount = 1;
+                }
+                
+                const bonusIndex = Math.min(gameState.streakCount - 1, STREAK_BONUSES.length - 1);
+                const bonusAmount = STREAK_BONUSES[bonusIndex];
+
+                gameState.totalCredits += bonusAmount;
+                gameState.lastClaimDate = todayStr;
+                
+                saveGameState();
+                updateStartScreenUI();
+                checkDailyBonus();
+
+                startCreditsEl.classList.add('flash-green');
+                setTimeout(() => startCreditsEl.classList.remove('flash-green'), 1000);
+            }
+        });
+
         // --- END SCREEN LOGIC ---
         function showEndScreen(isWin, creditsChange) {
-            // Módosított logika: Veszteség esetén a biztonsági pont kreditjeit adjuk hozzá
             let finalCreditsChange;
             if (isWin) {
                 finalCreditsChange = creditsChange;
@@ -861,14 +1319,14 @@
 
         function startGame(isRisky) {
             currentQuestionIndex = 0;
-            // Áthelyezve az init-be, de itt is megerősítjük a reset-et
             currentRoundState.isRisky = isRisky;
             currentRoundState.milestoneCreditsEarned = 0;
             currentRoundState.usedSafetyNetThisTurn = false;
             
             if (isRisky) { 
-                // A tét levonása a játék indításakor történik
-                // A visszanyerés a showEndScreen logikájában van kezelve nyerés esetén
+                 if (gameState.totalCredits >= RISKY_WAGER) {
+                    gameState.totalCredits -= RISKY_WAGER;
+                }
             }
             
             const shuffledAll = [...allQuestions];
@@ -884,7 +1342,6 @@
             gameContainer.classList.remove('success-pulse', 'fail-shake');
             bridgeScene.classList.remove('advance');
             
-            // Ha már elértük a biztonsági pontot, a jelző maradjon aktív
             progressMilestone.classList.toggle('reached', currentRoundState.milestoneCreditsEarned > 0);
             
             progressBar.style.width = `${(currentQuestionIndex / TOTAL_GAME_QUESTIONS) * 100}%`;
@@ -897,6 +1354,10 @@
             explanationContainer.style.display = 'none';
             nextButton.classList.remove('visible');
             endGameButton.classList.remove('visible');
+
+            fiftyFiftyEl.dataset.usedInRound = 'false';
+            swapEl.dataset.usedInRound = 'false';
+
             const futureBridges = bridgeScene.querySelectorAll('.future-bridge');
             futureBridges.forEach((bridge, index) => {
                 bridge.style.display = (index < (TOTAL_GAME_QUESTIONS - currentQuestionIndex - 1)) ? 'block' : 'none';
@@ -917,18 +1378,17 @@
         function handleAnswer(selectedBridge) {
             lifelinesContainer.style.pointerEvents = 'none';
             document.querySelectorAll('.bridge-option').forEach(option => {
-                if(!option.classList.contains('disabled-by-lifeline')) {
-                     option.classList.add('disabled');
-                }
+                option.classList.add('disabled');
             });
-            selectedBridge.classList.add('selected');
+            
+            selectedBridge.classList.add('is-chosen');
 
             const selectedOptionText = selectedBridge.textContent;
             const currentQuestion = gameQuestions[currentQuestionIndex];
             const isCorrect = selectedOptionText === currentQuestion.answer;
             
             setTimeout(() => {
-                selectedBridge.classList.remove('selected');
+                selectedBridge.classList.remove('is-chosen');
                 const correctBridge = Array.from(document.querySelectorAll('.bridge-option')).find(opt => opt.textContent === currentQuestion.answer);
                 
                 if (isCorrect) {
@@ -936,7 +1396,6 @@
                     gameContainer.classList.add('success-pulse');
                     bridgeScene.classList.add('advance');
                     
-                    // --- BIZTONSÁGI PONT LOGIKA ---
                     if ((currentQuestionIndex + 1) === MILESTONE_QUESTION && currentRoundState.milestoneCreditsEarned === 0) {
                         currentRoundState.milestoneCreditsEarned = MILESTONE_CREDITS;
                         resultContainer.textContent = `Biztonsági Pont! ${MILESTONE_CREDITS} Kredit biztosítva!`;
@@ -946,10 +1405,10 @@
                     }
                     resultContainer.style.color = 'var(--correct-color)';
 
-                } else { // Helytelen válasz
+                } else { // Incorrect answer
                     selectedBridge.classList.add('incorrect');
                     if (correctBridge) correctBridge.classList.add('correct');
-                    if (currentRoundState.lifelines.safetyNet > 0) {
+                    if (currentRoundState.lifelines.safetyNet > 0 && !currentRoundState.usedSafetyNetThisTurn) {
                         currentRoundState.lifelines.safetyNet--;
                         currentRoundState.usedSafetyNetThisTurn = true;
                         updateLifelineUI();
@@ -970,19 +1429,18 @@
                     if (isCorrect || currentRoundState.usedSafetyNetThisTurn) {
                         if (currentQuestionIndex < gameQuestions.length - 1) {
                             nextButton.classList.add('visible');
-                        } else { // Győzelem
+                        } else { // Victory
                             progressBar.style.width = '100%';
                             const creditsWon = BASE_WIN_CREDITS * (currentRoundState.isRisky ? 2 : 1);
                             let finalWinAmount = creditsWon;
                             if(currentRoundState.isRisky) {
-                                finalWinAmount += RISKY_WAGER; // Visszakapja a tétet
+                                finalWinAmount += RISKY_WAGER;
                             }
                             showEndScreen(true, finalWinAmount);
                         }
-                    } else { // Veszteség
-                        const wagerLost = currentRoundState.isRisky ? RISKY_WAGER : 0;
+                    } else { // Loss
                         endGameButton.classList.add('visible');
-                        endGameButton.onclick = () => showEndScreen(false, -wagerLost);
+                        endGameButton.onclick = () => showEndScreen(false, 0);
                     }
                 }, 1500);
 
@@ -1005,9 +1463,9 @@
             swapEl.classList.toggle('used', currentRoundState.lifelines.swap === 0 || unusedQuestionPool.length === 0 || swapEl.dataset.usedInRound === 'true');
             safetyNetEl.classList.toggle('used', currentRoundState.lifelines.safetyNet === 0);
         }
-
+        
         fiftyFiftyEl.addEventListener('click', () => {
-            if (currentRoundState.lifelines.fiftyFifty > 0 && !fiftyFiftyEl.dataset.usedInRound) {
+            if (currentRoundState.lifelines.fiftyFifty > 0 && fiftyFiftyEl.dataset.usedInRound !== 'true') {
                 currentRoundState.lifelines.fiftyFifty--;
                 fiftyFiftyEl.dataset.usedInRound = 'true';
                 updateLifelineUI();
@@ -1021,7 +1479,7 @@
         });
         
         swapEl.addEventListener('click', () => {
-            if (currentRoundState.lifelines.swap > 0 && !swapEl.dataset.usedInRound && unusedQuestionPool.length > 0) {
+            if (currentRoundState.lifelines.swap > 0 && swapEl.dataset.usedInRound !== 'true' && unusedQuestionPool.length > 0) {
                 currentRoundState.lifelines.swap--;
                 swapEl.dataset.usedInRound = 'true';
                 
@@ -1035,17 +1493,12 @@
         // --- INITIALIZATION ---
         function init() {
             loadGameState();
-            // A currentRoundState itt nullázódik minden új játék előtt
             currentRoundState = {
                 isRisky: false,
-                lifelines: { fiftyFifty: 0, swap: 0, safetyNet: 0 },
+                lifelines: { fiftyFifty: 1, swap: 1, safetyNet: 1 },
                 usedSafetyNetThisTurn: false,
-                milestoneCreditsEarned: 0 // ÚJ: Biztosított kreditek nullázása
+                milestoneCreditsEarned: 0
             };
-             // Kockázatos játék tétjének levonása a játék elején
-            if (currentRoundState.isRisky && gameState.totalCredits >= RISKY_WAGER) {
-                gameState.totalCredits -= RISKY_WAGER;
-            }
             showStartScreen();
         }
 
